@@ -2,8 +2,7 @@ name: Build VoiceAssistant APK
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
