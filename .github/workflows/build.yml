@@ -20,8 +20,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # ✅ تم الترقية إلى v4.0.4 لحل مشكلة sdkmanager
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4.0.4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,8 +36,6 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
 
-      # gradle-wrapper.properties (written by setup.py) pins Gradle 8.10.2; gradlew and the wrapper jar
-      # are generated here with the runner's Gradle in an empty folder (AGP is not involved yet).
       - name: Generate Gradle wrapper scripts
         run: |
           mkdir -p "$RUNNER_TEMP/wrapper-gen"
@@ -48,8 +47,14 @@ jobs:
           cp "$RUNNER_TEMP/wrapper-gen/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/
           chmod +x gradlew
 
+      # ✅ إنشاء ملف Firebase قبل البناء (إن وُجد السر)
       - name: Create google-services.json
-        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          else
+            echo "GOOGLE_SERVICES_JSON secret not set. Skipping Firebase."
+          fi
 
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
