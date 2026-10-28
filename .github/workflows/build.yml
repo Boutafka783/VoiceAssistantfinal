@@ -1,51 +1,58 @@
-name: Build VoiceAssistant APK
+name: Build APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Generate project files from setup.py
-        run: python setup.py
+      - name: Generate project from setup.py
+        run: python3 setup.py .
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          LICENSE_SECRET: ${{ secrets.LICENSE_SECRET }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
 
       - name: Build debug APK
-        run: gradle assembleDebug --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle assembleDebug --console=plain 2>&1 | tee build.log
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          LICENSE_SECRET: ${{ secrets.LICENSE_SECRET }}
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Error summary
+        if: failure()
+        shell: bash
+        run: |
+          echo "=== Kotlin errors (file:line) ==="
+          grep -n "^e: " build.log | head -30 || true
+          echo "=== What went wrong ==="
+          grep -n -A15 "What went wrong" build.log | head -40 || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: VoiceAssistant-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: build-output
+          path: |
+            build.log
+            app/build/outputs/apk/debug/*.apk
