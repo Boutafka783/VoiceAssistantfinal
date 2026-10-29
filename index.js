@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 
 // ⚠️ مهم جداً: غير هذا السر واكتب نفس المفتاح الذي وضعته في التطبيق (LICENSE_SECRET)
-const LICENSE_SECRET = "YOUR_SUPER_SECRET_KEY_HERE"; 
+const LICENSE_SECRET = "Zevorix_Master_Key_2026"; 
 
 const SENDGRID_KEY = "YOUR_SENDGRID_KEY_HERE"; // سنضع المفتاح لاحقاً
 const NOWPAYMENTS_IPN_SECRET = "YOUR_IPN_SECRET_HERE"; // سنضع المفتاح لاحقاً
