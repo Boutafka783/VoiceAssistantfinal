@@ -40,7 +40,7 @@ app.post('/paymentWebhook', async (req, res) => {
 
         const msg = {
             to: customerEmail,
-            from: 'noreply@yourdomain.com', // ⚠️ ضع إيميلك الموثق لاحقاً
+            from: 'tijara6@gmail.com', // ⚠️ ضع إيميلك الموثق لاحقاً
             subject: 'تم تفعيل نسختك المدفوعة من Zevorix AI',
             html: `<h3>شكراً لشرائك!</h3><p>كود التفعيل الخاص بك هو: <strong>${licenseKey}</strong></p><p>أدخله في التطبيق لفتح جميع الميزات.</p>`,
         };
