@@ -45,9 +45,10 @@ function generateLicenseKey() {
     return `ZEV-${nonce}-${signature}`;
 }
 
+// مسار الـ Webhook الحقيقي الخاص بالدفع
 app.post('/paymentWebhook', async (req, res) => {
     try {
-        // التحقق من توقيع بوابة الدفع (باستخدام الترتيب العميق)
+        // التحقق من توقيع بوابة الدفع
         const receivedSig = req.headers['x-nowpayments-sig'];
         const sortedBody = JSON.stringify(deepSort(req.body));
         
@@ -67,8 +68,6 @@ app.post('/paymentWebhook', async (req, res) => {
             return res.status(200).send('Payment not confirmed yet');
         }
 
-        // 3. جلب البريد الإلكتروني من NOWPayments
-        // (إذا كان المستخدم يدخله في صفحة الدفع، سيكون في customer_email، وإلا سنستخدم order_description)
         const emailToSend = customer_email || order_description;
 
         if (!emailToSend || !emailToSend.includes('@')) {
@@ -98,6 +97,30 @@ app.post('/paymentWebhook', async (req, res) => {
         res.status(500).send('Error processing webhook');
     }
 });
+
+// =====================================================================
+// 🧪 مسار تجريبي فقط (احذفه أو علق عليه بعد الانتهاء من التجربة)
+// =====================================================================
+app.get('/test-license', async (req, res) => {
+    const email = req.query.email;
+    if (!email) return res.send("Please provide ?email=your@email.com");
+    
+    const licenseKey = generateLicenseKey();
+    const msg = {
+        to: email,
+        from: 'tijara6@gmail.com',
+        subject: 'تجربة إرسال كود التفعيل (Zevorix AI)',
+        html: `<h3>كودك التجريبي هو:</h3> <h1 style="font-family: monospace;">${licenseKey}</h1>`,
+    };
+    try {
+        await sgMail.send(msg);
+        res.send(`Test key sent to ${email}. Key is: ${licenseKey}`);
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Email failed to send. Check Render logs.");
+    }
+});
+// =====================================================================
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
