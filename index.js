@@ -3,6 +3,54 @@ const sgMail = require('@sendgrid/mail');
 const crypto = require('crypto');
 const admin = require('firebase-admin');
 const multer = require('multer');
+const fs = require('fs'); // أضفنا هذا لقراءة الملفات
+
+// ... (باقي المتغيرات كما هي) ...
+
+// ============================================================================
+// 2. تهيئة Firebase Admin (القراءة من الملف السري أو المتغير)
+// ============================================================================
+let firebaseReady = false;
+let db, bucket;
+
+try {
+    let serviceAccount = null;
+
+    // 1. البحث عن الملف السري الذي أنشأناه في Render
+    if (fs.existsSync('/etc/secrets/firebase-key.json')) {
+        const fileContent = fs.readFileSync('/etc/secrets/firebase-key.json', 'utf8');
+        serviceAccount = JSON.parse(fileContent);
+        console.log("✅ Found Firebase key in Secret File.");
+    } 
+    // 2. إذا لم يوجد، نبحث في المتغيرات (كخطة بديلة)
+    else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        if (serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
+        console.log("✅ Found Firebase key in Environment Variables.");
+    }
+
+    if (serviceAccount) {
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${serviceAccount.project_id}.appspot.com`
+        });
+        db = admin.firestore();
+        bucket = admin.storage().bucket();
+        firebaseReady = true;
+        console.log("🔥 Firebase Admin initialized successfully.");
+    } else {
+        console.warn("⚠️ Firebase key not found in Secret Files or Env Vars.");
+    }
+} catch (e) {
+    console.error("❌ Firebase Admin init failed:", e.message);
+} 
+const express = require('express');
+const sgMail = require('@sendgrid/mail');
+const crypto = require('crypto');
+const admin = require('firebase-admin');
+const multer = require('multer');
 
 const app = express();
 app.use(express.json());
