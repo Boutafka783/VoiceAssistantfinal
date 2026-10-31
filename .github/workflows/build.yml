@@ -30,7 +30,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      # 1. إنشاء ملفات المشروع أولاً (هذه الخطوة تنشئ مجلد app)
       - name: Generate project files from setup.py
         run: python setup.py
         env:
@@ -44,12 +43,24 @@ jobs:
       - name: Create google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
 
-      # 2. فك تشفير المفتاح (تم إضافة tr -d لمسح أي مسافات أو أسطر جديدة)
-      - name: Decode Keystore
+      # --- الحل الجذري: فك التشفير باستخدام بايثون ---
+      - name: Decode Keystore (Python)
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | tr -d ' \n\r' | base64 -d > app/release.jks
+          python -c "
+          import base64, os, re
+          s = os.environ['KEYSTORE_BASE64']
+          # إزالة أي رموز أو مسافات غير صالحة
+          s = re.sub(r'[^a-zA-Z0-9+/=]', '', s)
+          # إضافة علامات = الناقصة إذا لزم الأمر
+          missing_padding = len(s) % 4
+          if missing_padding:
+              s += '=' * (4 - missing_padding)
+          # فك التشفير وحفظ الملف
+          open('app/release.jks', 'wb').write(base64.b64decode(s))
+          print('Keystore decoded successfully.')
+          "
 
       - name: Generate Gradle wrapper scripts
         run: |
@@ -62,7 +73,6 @@ jobs:
           cp "$RUNNER_TEMP/wrapper-gen/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/
           chmod +x gradlew
 
-      # 3. البناء والتوقيع
       - name: Build Release APK
         run: |
           set -o pipefail
