@@ -1,13 +1,23 @@
-name: Print Keystore
+name: Generate Keystore and Base64
 on: workflow_dispatch
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate Keystore and Print
+      - name: Generate Keystore
         run: |
           keytool -genkey -v -keystore zevorix.jks -keyalg RSA -keysize 2048 -validity 10000 -alias zevorix -storepass Zevorix123! -keypass Zevorix123! -dname "CN=Zevorix, OU=Dev, O=Zevorix, L=City, ST=State, C=US"
-          echo "========== COPY TEXT FROM HERE =========="
-          base64 -w 0 zevorix.jks
-          echo ""
-          echo "========== COPY TEXT TO HERE =========="
+      
+      - name: Verify Keystore
+        run: keytool -list -v -keystore zevorix.jks -storepass Zevorix123!
+
+      - name: Convert to Base64
+        run: base64 -w 0 zevorix.jks > keystore.txt
+      
+      - name: Upload Keystore and Base64
+        uses: actions/upload-artifact@v4
+        with:
+          name: keystore-files
+          path: |
+            zevorix.jks
+            keystore.txt
