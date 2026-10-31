@@ -30,6 +30,12 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > app/release.jks
+
       - name: Generate project files from setup.py
         run: python setup.py
         env:
@@ -54,11 +60,15 @@ jobs:
           cp "$RUNNER_TEMP/wrapper-gen/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/
           chmod +x gradlew
 
-      - name: Build debug APK
+      - name: Build Release APK
         run: |
           set -o pipefail
-          ./gradlew assembleDebug --stacktrace --console=plain 2>&1 | tee build.log
+          ./gradlew assembleRelease --stacktrace --console=plain 2>&1 | tee build.log
         env:
+          KEYSTORE_PATH: "app/release.jks"
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
@@ -75,5 +85,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VoiceAssistant-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: Zevorix-Release-APK
+          path: app/build/outputs/apk/release/*.apk
