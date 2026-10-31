@@ -20,9 +20,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # ✅ تم الترقية إلى v4.0.4 لحل مشكلة sdkmanager
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v4.0.4
+        uses: android-actions/setup-android@v3
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,6 +34,12 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          VIDEO_SERVER_URL: ${{ secrets.VIDEO_SERVER_URL }}
+          REMOTE_CONFIG_URL: ${{ secrets.REMOTE_CONFIG_URL }}
+          LICENSE_SECRET: ${{ secrets.LICENSE_SECRET }}
+
+      - name: Create google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
 
       - name: Generate Gradle wrapper scripts
         run: |
@@ -47,22 +52,23 @@ jobs:
           cp "$RUNNER_TEMP/wrapper-gen/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/
           chmod +x gradlew
 
-      # ✅ إنشاء ملف Firebase قبل البناء (إن وُجد السر)
-      - name: Create google-services.json
-        run: |
-          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
-            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
-          else
-            echo "GOOGLE_SERVICES_JSON secret not set. Skipping Firebase."
-          fi
-
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --stacktrace --console=plain 2>&1 | tee build.log
         env:
-          LICENSE_SECRET: ${{ secrets.LICENSE_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          VIDEO_SERVER_URL: ${{ secrets.VIDEO_SERVER_URL }}
+          REMOTE_CONFIG_URL: ${{ secrets.REMOTE_CONFIG_URL }}
+          LICENSE_SECRET: ${{ secrets.LICENSE_SECRET }}
+
+      - name: Show build errors
+        if: failure()
+        run: |
+          echo "===== BUILD ERRORS ====="
+          grep -nE "^e: |error:|What went wrong|OutOfMemory|Java heap|GC overhead|Execution failed|Caused by" build.log | head -60 || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
