@@ -1,0 +1,15 @@
+name: Generate Keystore
+on: workflow_dispatch
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Keystore
+        run: |
+          keytool -genkey -v -keystore zevorix.jks -keyalg RSA -keysize 2048 -validity 10000 -alias zevorix -storepass Zevorix123! -keypass Zevorix123! -dname "CN=Zevorix, OU=Dev, O=Zevorix, L=City, ST=State, C=US"
+          base64 -w 0 zevorix.jks > keystore.txt
+      - name: Upload Keystore Base64
+        uses: actions/upload-artifact@v4
+        with:
+          name: keystore-base64
+          path: keystore.txt
