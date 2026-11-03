@@ -40,6 +40,10 @@ jobs:
           VIDEO_SERVER_URL: ${{ secrets.VIDEO_SERVER_URL }}
           REMOTE_CONFIG_URL: ${{ secrets.REMOTE_CONFIG_URL }}
 
+      # 2. 🆕 إضافة مختبر الإلكترونيات (يعدّل الملفات التي ولّدها setup.py)
+      - name: Apply Circuit Lab patch
+        run: python circuit_patch.py
+
       - name: Create google-services.json
         run: printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
         env:
@@ -49,43 +53,42 @@ jobs:
       - name: Install ImageMagick
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-      # 2. حقن الأيقونة (يبحث عن أي صورة في المجلد الرئيسي)
+      # 3. حقن الأيقونة (يبحث عن أي صورة في المجلد الرئيسي)
       - name: Inject Custom App Icon
         run: |
-          # حذف أيقونة المتجهات الافتراضية لكي تأخذ صورتك الأولوية
-          rm -rf app/src/main/res/mipmap-anydpi-v26
-          
           ICON_FILE=$(find . -maxdepth 1 -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | head -n 1)
-          
+
           if [ -n "$ICON_FILE" ]; then
             echo "🎨 Found image: $ICON_FILE, generating mipmaps..."
-            mkdir -p app/src/main/res/mipmap-mdpi
-            mkdir -p app/src/main/res/mipmap-hdpi
-            mkdir -p app/src/main/res/mipmap-xhdpi
-            mkdir -p app/src/main/res/mipmap-xxhdpi
-            mkdir -p app/src/main/res/mipmap-xxxhdpi
-            
-            convert "$ICON_FILE" -resize 48x48 app/src/main/res/mipmap-mdpi/ic_launcher.png
-            convert "$ICON_FILE" -resize 72x72 app/src/main/res/mipmap-hdpi/ic_launcher.png
-            convert "$ICON_FILE" -resize 96x96 app/src/main/res/mipmap-xhdpi/ic_launcher.png
+
+            # حذف أيقونة المتجهات الافتراضية لكي تأخذ صورتك الأولوية
+            rm -rf app/src/main/res/mipmap-anydpi-v26
+
+            for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              mkdir -p "app/src/main/res/mipmap-$d"
+            done
+
+            convert "$ICON_FILE" -resize 48x48   app/src/main/res/mipmap-mdpi/ic_launcher.png
+            convert "$ICON_FILE" -resize 72x72   app/src/main/res/mipmap-hdpi/ic_launcher.png
+            convert "$ICON_FILE" -resize 96x96   app/src/main/res/mipmap-xhdpi/ic_launcher.png
             convert "$ICON_FILE" -resize 144x144 app/src/main/res/mipmap-xxhdpi/ic_launcher.png
             convert "$ICON_FILE" -resize 192x192 app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-            
-            cp app/src/main/res/mipmap-mdpi/ic_launcher.png app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-            cp app/src/main/res/mipmap-hdpi/ic_launcher.png app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-            cp app/src/main/res/mipmap-xhdpi/ic_launcher.png app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-            cp app/src/main/res/mipmap-xxhdpi/ic_launcher.png app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-            cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
-            
-            # حقن الأيقونة في المانيفست باستخدام sed (أسهل وأكثر أماناً من python وبدون أخطاء مسافات)
-            sed -i 's/<application/<application android:icon="@mipmap\/ic_launcher" android:roundIcon="@mipmap\/ic_launcher_round"/' app/src/main/AndroidManifest.xml
-            
+
+            for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              cp "app/src/main/res/mipmap-$d/ic_launcher.png" "app/src/main/res/mipmap-$d/ic_launcher_round.png"
+            done
+
+            # حقن الأيقونة في المانيفست (مرة واحدة فقط، وتجنب التكرار إن كانت موجودة)
+            if ! grep -q 'android:icon=' app/src/main/AndroidManifest.xml; then
+              sed -i '0,/<application/s|<application|<application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"|' app/src/main/AndroidManifest.xml
+            fi
+
             echo "✅ Custom icon applied successfully."
           else
             echo "⚠️ Warning: No image found. Using default icon."
           fi
 
-      # 3. توليد ملفات Gradle Wrapper
+      # 4. توليد ملفات Gradle Wrapper
       - name: Generate Gradle wrapper scripts
         run: |
           mkdir -p "$RUNNER_TEMP/wrapper-gen"
@@ -98,13 +101,13 @@ jobs:
           cp "$RUNNER_TEMP/wrapper-gen/gradle/wrapper/gradle-wrapper.jar" gradle/wrapper/
           chmod +x gradlew
 
-      # 4. فك تشفير ملف التوقيع من الأسرار
+      # 5. فك تشفير ملف التوقيع من الأسرار
       - name: Decode Keystore
         run: echo "$KEYSTORE_BASE64" | base64 -d > app/release.jks
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
-      # 5. التحقق من وجود ملف التوقيع
+      # 6. التحقق من وجود ملف التوقيع
       - name: Verify Keystore Exists
         run: |
           if [ -s "app/release.jks" ]; then
@@ -114,7 +117,7 @@ jobs:
             exit 1
           fi
 
-      # 6. البناء والتوقيع
+      # 7. البناء والتوقيع
       - name: Build Release APK
         run: |
           set -o pipefail
@@ -136,9 +139,18 @@ jobs:
           echo "===== BUILD ERRORS ====="
           grep -nE "^e: |error:|What went wrong|OutOfMemory|Java heap|GC overhead|Execution failed|Caused by" build.log | head -60 || true
 
-      # 7. رفع التطبيق
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      # 8. رفع التطبيق
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Zevorix-Release-APK
           path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
