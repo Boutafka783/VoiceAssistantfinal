@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ورشة تصنيع الروبوتات</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#0a0f18;color:#e8edf5;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;font-size:12px;user-select:none;-webkit-user-select:none}
+button,input{font-family:inherit}
+button{touch-action:manipulation}
+#app{position:relative;display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%;overflow:hidden;overflow:clip}
+#scene{overflow:hidden;overflow:clip}
+#tabs{flex:0 0 auto;height:2.7rem;display:flex;gap:.3rem;padding:.3rem .5rem;background:#0d1522;border-bottom:1px solid rgba(53,208,255,.4)}
+#tabs button{flex:1;border-radius:.6rem;border:1px solid rgba(53,208,255,.35);background:transparent;color:#9fe8ff;font-size:.95rem;font-weight:800}
+#tabs button.on{background:rgba(53,208,255,.2);color:#fff;border-color:#35d0ff}
+#codePg{display:none;position:absolute;left:0;right:0;top:2.7rem;bottom:0;z-index:30;flex-direction:column;gap:.4rem;padding:.5rem;background:#0a0f18}
+#app.cp #codePg{display:flex}
+#code{flex:1 1 40%;min-height:6rem;width:100%;resize:none;direction:ltr;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;line-height:1.5;background:#060a12;color:#cfe9ff;border:1px solid rgba(53,208,255,.4);border-radius:.7rem;padding:.5rem;user-select:text;-webkit-user-select:text;white-space:pre;overflow:auto}
+.cb{display:flex;gap:.35rem;flex-wrap:wrap}.cb button,.cb label{flex:1;min-width:30%;text-align:center;padding:.5rem;border-radius:.7rem;border:1px solid rgba(53,208,255,.45);background:rgba(53,208,255,.1);color:#e8edf5;font-size:.88rem;font-weight:700}
+#log{flex:1 1 40%;overflow-y:auto;font-size:.85rem;line-height:1.55;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:.7rem;padding:.4rem .5rem;user-select:text;-webkit-user-select:text}
+.le{color:#ff9a96}.lw{color:#ffd08a}.lo{color:#7dffb0}.l1{color:#9fb4cc;margin-top:.3rem}
+#scene{position:relative;flex:1 1 auto;min-height:0}
+#stage{display:block;width:100%;height:100%;touch-action:none}
+#top{position:absolute;top:.6rem;left:.6rem;right:.6rem;pointer-events:none}
+#prog{position:relative;height:1.7rem;border-radius:.9rem;background:rgba(10,15,24,.8);border:1px solid rgba(53,208,255,.45);overflow:hidden}
+#bar{position:absolute;inset:0 0 0 auto;width:0;background:linear-gradient(270deg,#35d0ff,#2ecc71);transition:width .4s}
+#pt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:800;color:#fff;text-shadow:0 1px 3px #000}
+#toast{position:absolute;top:2.9rem;left:3.2rem;right:3.2rem;text-align:center;background:rgba(10,15,24,.92);border:1px solid rgba(255,159,28,.55);color:#ffd9a0;padding:.45rem .7rem;border-radius:.8rem;font-size:.95rem;line-height:1.5;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
+.hd{position:absolute;top:38%;z-index:6;padding:.7rem .35rem;border:1px solid #35d0ff;background:rgba(10,15,24,.85);color:#9fe8ff;font-size:.95rem;font-weight:800;writing-mode:vertical-rl;line-height:1}
+#scene:not(.man) .hd,#app:not(.man) .dr{display:none}
+#mode{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:1.2rem;background:rgba(10,15,24,.82);text-align:center}
+#mode h2{margin:0 0 .3rem;font-size:1.25rem;color:#9fe8ff}
+#mode button{width:min(100%,17rem);padding:.9rem 1rem;border-radius:.9rem;border:1px solid #35d0ff;background:rgba(53,208,255,.12);color:#e8edf5;font-size:1.05rem;font-weight:800}
+#mode button.pri{background:#ff9f1c;border-color:#ffc266;color:#1a1100}
+#mode small{display:block;margin-top:.15rem;font-size:.8rem;font-weight:500;opacity:.8}
+#bL{left:0;border-radius:0 .8rem .8rem 0}#bR{right:0;border-radius:.8rem 0 0 .8rem}
+.hd.nx::after{content:" ●";color:#ff9f1c}
+#ctrl{position:absolute;bottom:.6rem;left:0;right:0;display:flex;justify-content:center}
+#ctrl button{padding:.7rem 1.1rem;border-radius:.8rem;border:1px solid #ffc266;background:#ff9f1c;color:#1a1100;font-size:1.05rem;font-weight:800;display:none}
+#ctrl button.on{background:#e5484d;color:#fff;border-color:#ff8a8d}
+.dr{position:absolute;top:2.7rem;bottom:0;z-index:20;width:min(80vw,19rem);display:flex;flex-direction:column;background:rgba(9,14,24,.97);border:1px solid #35d0ff;box-shadow:0 0 24px rgba(53,208,255,.25);transition:transform .25s}
+#dl{left:0;transform:translateX(-105%);border-radius:0 1rem 1rem 0}#dr{right:0;transform:translateX(105%);border-radius:1rem 0 0 1rem}
+#dl.open,#dr.open,.dr.open{transform:none}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;font-size:1.05rem;font-weight:800;color:#9fe8ff;border-bottom:1px solid rgba(53,208,255,.3)}
+.dh button{border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:50%;width:1.7rem;height:1.7rem}
+.db{flex:1;overflow-y:auto;padding:.4rem .5rem 1rem}
+.gp>button{width:100%;text-align:start;padding:.55rem .6rem;margin-top:.35rem;border:1px solid rgba(53,208,255,.3);border-radius:.7rem;background:rgba(53,208,255,.08);color:#e8edf5;font-size:.95rem;font-weight:800;display:flex;justify-content:space-between}
+.gp>button::after{content:"▾";color:#35d0ff}.gp.open>button::after{content:"▴"}
+.gp .li{display:none;padding:.2rem 0}.gp.open .li{display:block}
+.it{display:flex;gap:.5rem;align-items:center;padding:.45rem .5rem;margin:.25rem 0;border-radius:.7rem;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);touch-action:pan-y}
+.it.nx{border-color:#ff9f1c;box-shadow:0 0 10px rgba(255,159,28,.5)}
+.it.on{border-color:#2ecc71;background:rgba(46,204,113,.1)}
+.it.lock{opacity:.45}
+.it .ic{font-size:1.5rem;width:1.9rem;text-align:center}
+.it b{display:block;font-size:.9rem}.it small{display:block;color:#8fa1bb;font-size:.78rem;line-height:1.35}
+.it em{font-style:normal;color:#9fe8ff;font-size:.78rem}
+#bot{flex:0 0 auto;max-height:42%;overflow-y:auto;display:flex;flex-direction:column;gap:.4rem;padding:.5rem .7rem .6rem;background:linear-gradient(180deg,rgba(20,30,50,.8),rgba(8,12,22,.97));border-top:1px solid #35d0ff}
+#hint{font-size:.95rem;line-height:1.5;color:#9fe8ff;background:rgba(53,208,255,.08);border:1px solid rgba(53,208,255,.35);border-radius:.7rem;padding:.4rem .6rem}
+#warn{display:none;font-size:.88rem;line-height:1.55;color:#ffb4a8;background:rgba(229,72,77,.1);border:1px solid rgba(229,72,77,.5);border-radius:.7rem;padding:.4rem .6rem}
+.ask{display:flex;gap:.4rem}
+.ask input{flex:1;min-width:0;border-radius:.7rem;border:1px solid rgba(53,208,255,.4);background:rgba(0,0,0,.3);color:#fff;padding:.45rem .6rem;font-size:.95rem;user-select:text;-webkit-user-select:text}
+.ask button,.tb button{padding:.5rem .6rem;border-radius:.7rem;border:1px solid rgba(53,208,255,.45);background:rgba(53,208,255,.1);color:#e8edf5;font-size:.9rem;font-weight:700}
+#ans{font-size:.9rem;line-height:1.6;color:#ffd9a0}
+.tb{display:flex;gap:.4rem}.tb button{flex:1}
+#fly{position:fixed;display:none;z-index:40;pointer-events:none;font-size:2.8rem;transform:translate(-50%,-50%);filter:drop-shadow(0 0 10px #35d0ff)}
+.err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1.5rem;text-align:center;color:#ff8a8d;line-height:1.7}
+#loading{position:fixed;inset:0;z-index:50;background:#0a0f18;display:flex;align-items:center;justify-content:center;transition:opacity .4s;color:#9fe8ff;font-size:1.2rem}
+</style>
+</head>
+<body>
+<div id="loading">جاري تجهيز الورشة…</div>
+<div id="app">
+  <div id="tabs"><button id="tBuild" class="on">🔧 التركيب</button><button id="tCode">💻 البرمجة</button></div>
+  <div id="scene">
+    <canvas id="stage"></canvas>
+    <div id="top"><div id="prog"><div id="bar"></div><div id="pt"></div></div></div>
+    <div id="toast"></div>
+    <button class="hd" id="bL">📦 القطع</button><button class="hd" id="bR">🦴 الهياكل</button>
+    <div id="ctrl"><button id="bRun">▶ تشغيل الروبوت</button></div>
+    <div id="mode"><h2>كيف تريد تركيب الروبوت؟</h2><button class="pri" id="mSelf">🛠 أركّب بنفسي<small>تظهر القطع في اللوائح الجانبية</small></button><button id="mWatch">👀 شاهد التركيب<small>عرض تلقائي خطوة بخطوة</small></button></div>
+  </div>
+  <div id="bot">
+    <div id="hint"></div><div id="warn"></div>
+    <div class="ask"><input id="q" placeholder="اسأل المساعد: لماذا يحترق السيرفو؟"><button id="bAsk">اسأل</button><button id="bMic" aria-label="تحدث">🎤</button></div>
+    <div id="ans"></div>
+    <div class="tb"><button id="bUndo">↩ تراجع</button><button id="bSelf">🛠 أركّب بنفسي</button><button id="bDemo">👀 شاهد التركيب</button><button id="bClear">🗑 فك الكل</button></div>
+  </div>
+  <div id="codePg"><textarea id="code" spellcheck="false" placeholder="اكتب برنامج الروبوت هنا أو ارفع ملفاً…"></textarea>
+    <div class="cb"><label for="fIn">📂 رفع ملف</label><input type="file" id="fIn" accept=".txt,.ino,.c,.cpp,.h,.py,.js,text/*" hidden><button id="cEx">📋 مثال</button><button id="cChk">🧪 فحص</button><button id="cRun">▶ شغّل</button></div>
+    <div id="log"><div class="l1">الأوامر: walk(خطوات) · turn(درجات) · wave() · nod() · look() · talk("نص") · listen() · led("red") · delay(ms) · sleep(s)<br>لا يعمل الروبوت إلا إذا اكتمل التركيب وسلم الكود، والفيزياء (الوزن والعزم والاتزان) تحدد هل يمشي أو يسقط.</div></div></div>
+  <div class="dr" id="dl"><div class="dh"><span>📦 قطع الروبوت</span><button data-c="1">✕</button></div><div class="db" id="dlb"></div></div>
+  <div class="dr" id="dr"><div class="dh"><span>🦴 الهياكل</span><button data-c="1">✕</button></div><div class="db" id="drb"></div></div>
+</div>
+<div id="fly"></div>
+<script src="three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (i) { return document.getElementById(i); };
+  function fit() { var m = Math.min(innerWidth, innerHeight); document.documentElement.style.fontSize = (16 * Math.max(0.6, Math.min(0.85, m / 520))) + 'px'; }
+  fit(); addEventListener('resize', fit);
+  function toast(m) { var t = $('toast'); t.textContent = m; t.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(function () { t.style.opacity = 0; }, 4200); }
+  function fail(m) { $('loading').style.display = 'none'; $('scene').insertAdjacentHTML('beforeend', '<div class="err">' + m + '</div>'); }
+  if (!window.THREE) { fail('تعذّر تحميل مكتبة three.js. ضع الملف three.min.js بجانب هذه الصفحة أو اتصل بالإنترنت.'); return; }
+  var T = THREE, canvas = $('stage'), renderer;
+  try { renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true }); } catch (e) { fail('تعذّر تشغيل العرض ثلاثي الأبعاد على هذا الجهاز.'); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.shadowMap.enabled = true; renderer.setClearColor(0x0a0f18);
+  var scene = new T.Scene(), camera = new T.PerspectiveCamera(45, 1, 0.1, 80);
+  scene.add(new T.HemisphereLight(0xbfd8ff, 0x1a1f2b, 0.9));
+  var sun = new T.DirectionalLight(0xffffff, 1.1); sun.position.set(4, 9, 5); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+  var sc = sun.shadow.camera; sc.left = -7; sc.right = 7; sc.top = 7; sc.bottom = -7; sc.far = 30; scene.add(sun);
+  var ground = new T.Mesh(new T.CircleGeometry(7, 64).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: 0x141b29, roughness: 0.9 })); ground.receiveShadow = true; scene.add(ground);
+  var grid = new T.GridHelper(14, 14, 0x34445e, 0x1f2a3d); grid.position.y = 0.01; scene.add(grid);
+  var pad = new T.Mesh(new T.TorusGeometry(1.25, 0.04, 8, 64).rotateX(Math.PI / 2), new T.MeshBasicMaterial({ color: 0x35d0ff })); pad.position.y = 0.03; scene.add(pad);
+
+  // ===== مواد وأدوات رسم =====
+  function M(c, m, r, e, o) { return new T.MeshStandardMaterial({ color: c, metalness: m, roughness: r, emissive: e || 0, transparent: o !== undefined, opacity: o === undefined ? 1 : o, depthWrite: o === undefined }); }
+  var ALU = M(0xaeb8c6, 0.6, 0.4), DARK = M(0x2b3340, 0.4, 0.5), EYE = M(0x35d0ff, 0, 0.3, 0x35d0ff), FM = M(0x9aa6b5, 0.7, 0.35, 0, 0.55);
+  function at(o, x, y, z) { o.position.set(x || 0, y || 0, z || 0); return o; }
+  function box(w, h, d, m, x, y, z) { return at(new T.Mesh(new T.BoxGeometry(w, h, d), m), x, y, z); }
+  function cyl(r, h, m, x, y, z) { return at(new T.Mesh(new T.CylinderGeometry(r, r, h, 20), m), x, y, z); }
+  function sph(r, m, x, y, z) { return at(new T.Mesh(new T.SphereGeometry(r, 18, 14), m), x, y, z); }
+  function grp() { var g = new T.Group(); for (var i = 0; i < arguments.length; i++) g.add(arguments[i]); return g; }
+
+  // ===== أنواع القطع (المتغيّرات) =====
+  var JT = ['neck', 'shoulder', 'elbow', 'hip', 'knee'], VS = [];
+  function v(id, cat, st, n, i, s, d, x) { var o = { id: id, cat: cat, st: st, n: n, i: i, s: s, d: d, x: x || {} }; VS.push(o); return o; }
+  // مفاصل ومشغّلات (a/b = مجال الجهد)
+  v('sg90', 'j', JT, 'سيرفو SG90', '⚙️', '4.8–6V · عزم صغير', 'صغير ورخيص، يناسب الأطراف الخفيفة جداً.', { c: 0x2a6fd8, r: 0.07, a: 4.8, b: 6 });
+  v('mg996', 'j', JT, 'سيرفو MG996R', '⚙️', '4.8–7.2V · تروس معدنية', 'عزم متوسط (نحو 11 كغ·سم) للروبوتات الصغيرة.', { c: 0xc0392b, r: 0.09, a: 4.8, b: 7.2 });
+  v('dyn', 'j', JT, 'سيرفو ذكي Dynamixel', '🧩', '9–12V · تغذية راجعة', 'يقرأ الموضع والحمل ويُربط على ناقل بيانات واحد.', { c: 0x222831, r: 0.1, a: 9, b: 12 });
+  v('nema', 'j', JT, 'ستيبر NEMA17', '🔩', '12–24V · دقة عالية', 'حركة دقيقة بخطوات، ويحتاج سائق محرك.', { c: 0x8a8f98, r: 0.11, a: 12, b: 24 });
+  v('bldc', 'j', JT, 'BLDC + علبة تروس', '🌀', '12–24V · قوة وسرعة', 'قدرة عالية للروبوتات الكبيرة، ويحتاج متحكم سرعة ESC.', { c: 0x1e8449, r: 0.12, a: 12, b: 24 });
+  v('hyd', 'j', JT, 'مشغّل هيدروليكي', '💧', 'ضغط زيت · قوة هائلة', 'أسطوانة زيت تدفعها مضخة: قوة كبيرة وحركة بطيئة سلسة، ويحتاج مضخة.', { c: 0xf1c40f, r: 0.1, h: 1 });
+  // متحكمات (a/b = جهد الدخل، l = مستوى المعالجة)
+  v('nano', 'c', ['ctl'], 'Arduino Nano', '🧠', '7–12V · 8 بت', 'متحكم بسيط للمهام الأساسية وقراءة الحساسات.', { c: 0x1b6ca8, w: 0.2, h: 0.4, a: 7, b: 12, l: 1 });
+  v('mega', 'c', ['ctl'], 'Arduino Mega', '🧠', '7–12V · 54 طرفاً', 'يناسب عدداً كبيراً من المحركات والحساسات.', { c: 0x0f7b8a, w: 0.3, h: 0.5, a: 7, b: 12, l: 1 });
+  v('stm', 'c', ['ctl'], 'STM32 Blue Pill', '🧠', '5V · 72MHz', 'أداء أعلى بسعر منخفض، ويعمل بجهد 5V ثابت.', { c: 0x1a3a8f, w: 0.2, h: 0.46, a: 4.5, b: 5.5, l: 1 });
+  v('esp32', 'c', ['ctl'], 'ESP32', '📶', '5–12V · واي فاي وبلوتوث', 'متحكم لاسلكي بنواتين، مناسب لروبوت متصل.', { c: 0x222a35, w: 0.22, h: 0.4, a: 5, b: 12, l: 2 });
+  v('rpi', 'c', ['ctl'], 'Raspberry Pi 4', '🍓', '5V · حاسوب كامل', 'يشغّل نظام لينكس ويعالج الرؤية الحاسوبية.', { c: 0x1d8348, w: 0.34, h: 0.5, a: 4.8, b: 5.3, l: 3 });
+  v('jet', 'c', ['ctl'], 'Jetson Nano', '🤖', '5V · معالج رسوميات AI', 'لتشغيل نماذج الذكاء الاصطناعي على الروبوت نفسه.', { c: 0x2c3e50, w: 0.4, h: 0.5, a: 4.8, b: 5.3, l: 4 });
+  // بطاريات (V = الجهد)
+  v('li1', 'b', ['bat'], 'Li-ion 3.7V', '🔋', '3.7V · خلية واحدة', 'جهد منخفض، تحتاج غالباً رافع جهد للمحركات.', { c: 0x7f8c8d, V: 3.7, w: 0.3, h: 0.34, d: 0.16 });
+  v('lp2', 'b', ['bat'], 'LiPo 7.4V (2S)', '🔋', '7.4V · خليتان', 'الأكثر شيوعاً للسيرفوهات الصغيرة والمتوسطة.', { c: 0x2980b9, V: 7.4, w: 0.4, h: 0.44, d: 0.18 });
+  v('lp3', 'b', ['bat'], 'LiPo 11.1V (3S)', '🔋', '11.1V · ثلاث خلايا', 'للمحركات المتوسطة؛ يحتاج منظّماً مع السيرفو.', { c: 0xe67e22, V: 11.1, w: 0.46, h: 0.5, d: 0.2 });
+  v('lp4', 'b', ['bat'], 'LiPo 14.8V (4S)', '🔋', '14.8V · أربع خلايا', 'قدرة أكبر للمحركات القوية.', { c: 0xc0392b, V: 14.8, w: 0.5, h: 0.52, d: 0.22 });
+  v('p24', 'b', ['bat'], 'حزمة 24V', '🔋', '24V · روبوتات كبيرة', 'للمحركات الصناعية والهيدروليك القوي.', { c: 0x8e44ad, V: 24, w: 0.64, h: 0.56, d: 0.3 });
+  // منظّمات وهيدروليك
+  v('b5', 'g', ['reg'], 'منظّم Buck 5V', '🔌', 'خرج 5V', 'يخفض جهد البطارية إلى 5V للمتحكمات.', { c: 0x1f6f3f, out: 5 });
+  v('b6', 'g', ['reg'], 'منظّم Buck 6V', '🔌', 'خرج 6V', 'مثالي لتغذية السيرفوهات الصغيرة.', { c: 0x1f6f3f, out: 6 });
+  v('b12', 'g', ['reg'], 'منظّم Buck 12V', '🔌', 'خرج 12V', 'يثبّت 12V من بطارية 24V.', { c: 0x1f6f3f, out: 12 });
+  v('pm12', 'h', ['pump'], 'مضخة هيدروليكية 12V', '💧', '10–14V · ضغط متوسط', 'تضخ الزيت إلى المشغّلات الهيدروليكية الصغيرة.', { c: 0x2471a3, a: 10, b: 14 });
+  v('pm24', 'h', ['pump'], 'مضخة هيدروليكية 24V', '💧', '20–28V · ضغط عالٍ', 'للأحمال الثقيلة والأطراف الكبيرة.', { c: 0x1b4f72, a: 20, b: 28 });
+  // كاميرات (l = مستوى المعالجة المطلوب)
+  v('ov', 'k', ['cam'], 'كاميرا OV7670', '📷', 'دقة منخفضة', 'بسيطة للمتحكمات الصغيرة.', { l: 1, r: 0.035 });
+  v('ecam', 'k', ['cam'], 'ESP32-CAM', '📷', '2MP · واي فاي', 'كاميرا مع متحكم لاسلكي مدمج.', { l: 2, r: 0.045 });
+  v('pic', 'k', ['cam'], 'Pi Camera', '📷', '8–12MP', 'جودة جيدة، وتحتاج حاسوباً مثل Raspberry Pi.', { l: 3, r: 0.055 });
+  v('web', 'k', ['cam'], 'كاميرا USB', '📷', '1080p', 'سهلة التوصيل بحاسوب مصغّر.', { l: 3, r: 0.065 });
+  v('dep', 'k', ['cam'], 'كاميرا عمق (RealSense)', '👁️', 'RGB + عمق', 'ترى المسافات لتجنّب العوائق وبناء خريطة.', { l: 4, r: 0.04, bar: 1 });
+  // مستشعرات
+  v('mpu', 'n', ['imu'], 'IMU MPU6050', '🧭', 'تسارع + دوران', 'يقيس ميل الجذع للحفاظ على التوازن.', {});
+  v('bno', 'n', ['imu'], 'IMU BNO055', '🧭', 'اتجاه مدمج', 'يحسب الاتجاه مباشرة بلا معالجة إضافية.', {});
+  v('hcs', 'n', ['rng'], 'HC-SR04 فوق صوتي', '📡', 'مدى 2–400سم', 'يقيس المسافة بالصدى الصوتي.', { t: 0 });
+  v('ir', 'n', ['rng'], 'مستشعر IR للمسافة', '📡', 'مدى قصير', 'رخيص ودقيق للمسافات القصيرة.', { t: 1 });
+  v('lid', 'n', ['rng'], 'LiDAR دوّار', '🛰️', 'مسح 360°', 'يرسم خريطة ثنائية الأبعاد للمحيط.', { t: 2 });
+  v('fsr', 'n', ['fsr'], 'مستشعر ضغط FSR', '🦶', 'قياس ضغط القدم', 'يخبرك بملامسة القدم للأرض لضبط الخطوة.', {});
+  // قطع الهيكل
+  v('torso', 'fs', ['torso'], 'الجذع', '🧱', 'إطار صدر وحوض', 'الهيكل الأساسي، وتُوضع فيه البطارية والمنظّم والمضخة.', {});
+  v('uarm', 'fs', ['uarm'], 'العضد', '💪', 'من الكتف إلى المرفق', 'الجزء العلوي من الذراع.', {});
+  v('farm', 'fs', ['farm'], 'الساعد', '🦾', 'من المرفق إلى المعصم', 'الجزء السفلي من الذراع ويحمل اليد.', {});
+  v('thigh', 'fs', ['thigh'], 'الفخذ', '🦵', 'من الورك إلى الركبة', 'يتحمل وزن الجسم ويتحرك مع مفصل الورك.', {});
+  v('shank', 'fs', ['shank'], 'الساق', '🦵', 'من الركبة إلى الكاحل', 'الجزء السفلي من الرجل.', {});
+  v('foot', 'fs', ['foot'], 'القدم', '🦶', 'قاعدة عريضة', 'تحفظ التوازن وتحمل مستشعر الضغط.', {});
+  v('hreal', 'fh', ['head'], 'رأس واقعي', '🗿', 'شكل بشري', 'رأس بيضاوي بملامح بشرية؛ شفاف لترى ما بداخله.', { k: 0 });
+  v('hmech', 'fh', ['head'], 'رأس ميكانيكي', '🤖', 'خوذة وقناع', 'رأس صناعي بقناع داكن.', { k: 1 });
+  v('hscr', 'fh', ['head'], 'رأس بشاشة وجه', '🖥️', 'شاشة تعبيرات', 'يعرض تعابير الوجه على شاشة.', { k: 2 });
+  v('hclaw', 'fa', ['hand'], 'مخلب بإصبعين', '🦀', 'قبضة قوية', 'بسيط ومتين للإمساك بالأجسام.', { k: 0 });
+  v('hfive', 'fa', ['hand'], 'يد بخمسة أصابع', '✋', 'قبضة بشرية', 'أقرب لليد البشرية وأصعب في التحكم.', { k: 1 });
+  v('hpar', 'fa', ['hand'], 'ملقط متوازٍ', '🗜️', 'دقة إمساك', 'فكان متوازيان للإمساك المنتظم.', { k: 2 });
+
+  // ===== قطع إضافية =====
+  v('mg90', 'j', JT, 'سيرفو MG90S', '⚙️', '4.8–6V · تروس معدنية', 'أمتن من SG90 وبحجم مماثل للأطراف الخفيفة.', { c: 0x3b5bdb, r: 0.065, a: 4.8, b: 6 });
+  v('ds32', 'j', JT, 'سيرفو DS3218', '⚙️', '4.8–6.8V · 20 كغ·سم', 'عزم عالٍ بسعر معقول للروبوتات المتوسطة.', { c: 0xd35400, r: 0.1, a: 4.8, b: 6.8 });
+  v('lx16', 'j', JT, 'سيرفو ناقل LX-16A', '🧩', '6–8.4V · تغذية راجعة', 'سيرفو ذكي رخيص يُربط على خط بيانات واحد.', { c: 0x34495e, r: 0.09, a: 6, b: 8.4 });
+  v('sts', 'j', JT, 'سيرفو Feetech STS3215', '🧩', '6–8.4V · 30 كغ·سم', 'دقيق ومتين، شائع في الأذرع التعليمية.', { c: 0x16a085, r: 0.095, a: 6, b: 8.4 });
+  v('mx64', 'j', JT, 'Dynamixel MX-64', '🧩', '10–14.8V · عزم كبير', 'عزم ودقة عاليان للمفاصل الرئيسية.', { c: 0x1c2833, r: 0.115, a: 10, b: 14.8 });
+  v('nm23', 'j', JT, 'ستيبر NEMA23', '🔩', '18–36V · عزم عالٍ', 'نسخة أقوى من NEMA17 للأحمال الثقيلة.', { c: 0x707b7c, r: 0.125, a: 18, b: 36 });
+  v('ak80', 'j', JT, 'محرك T-Motor AK80', '🌀', '22–52V · تحكم بالعزم', 'محرك قوي بلا تروس تقريباً لحركة رشيقة وسريعة.', { c: 0x4a235a, r: 0.13, a: 22, b: 52 });
+  v('uno', 'c', ['ctl'], 'Arduino Uno', '🧠', '7–12V · 14 طرفاً', 'أشهر لوحة للتعلم والمشاريع الصغيرة.', { c: 0x00878f, w: 0.26, h: 0.42, a: 7, b: 12, l: 1 });
+  v('pico', 'c', ['ctl'], 'Raspberry Pi Pico', '🧠', '1.8–5.5V · RP2040', 'متحكم صغير سريع وقليل الاستهلاك.', { c: 0x2e8b57, w: 0.16, h: 0.36, a: 1.8, b: 5.5, l: 1 });
+  v('teensy', 'c', ['ctl'], 'Teensy 4.1', '🧠', '3.6–5.5V · 600MHz', 'من أسرع المتحكمات الصغيرة، ممتاز للتحكم اللحظي.', { c: 0x1b2631, w: 0.2, h: 0.4, a: 3.6, b: 5.5, l: 2 });
+  v('rpz', 'c', ['ctl'], 'Raspberry Pi Zero 2 W', '🍓', '4.8–5.3V · لينكس مصغّر', 'حاسوب صغير جداً بواي فاي لروبوتات خفيفة.', { c: 0x196f3d, w: 0.26, h: 0.4, a: 4.8, b: 5.3, l: 2 });
+  v('rpi5', 'c', ['ctl'], 'Raspberry Pi 5', '🍓', '4.8–5.3V · أسرع Pi', 'أداء أعلى للرؤية الحاسوبية والتحكم معاً.', { c: 0x145a32, w: 0.36, h: 0.5, a: 4.8, b: 5.3, l: 3 });
+  v('orin', 'c', ['ctl'], 'Jetson Orin Nano', '🤖', '7–20V · ذكاء اصطناعي قوي', 'يشغّل نماذج رؤية وإدراك متقدمة على الروبوت.', { c: 0x1b2631, w: 0.42, h: 0.5, a: 7, b: 20, l: 4 });
+  v('aa6', 'b', ['bat'], 'علبة AA ×4 (6V)', '🔋', '6V · بطاريات عادية', 'رخيصة وسهلة الاستبدال للتجارب.', { c: 0x95a5a6, V: 6, w: 0.4, h: 0.3, d: 0.16 });
+  v('nimh', 'b', ['bat'], 'NiMH 9.6V', '🔋', '9.6V · آمنة', 'أقل خطورة من LiPo وتناسب المبتدئين.', { c: 0x2ecc71, V: 9.6, w: 0.42, h: 0.4, d: 0.18 });
+  v('lfp', 'b', ['bat'], 'LiFePO4 12.8V', '🔋', '12.8V · عمر طويل', 'آمنة وتتحمل دورات شحن كثيرة.', { c: 0x16a085, V: 12.8, w: 0.5, h: 0.46, d: 0.22 });
+  v('lp6', 'b', ['bat'], 'LiPo 22.2V (6S)', '🔋', '22.2V · قدرة عالية', 'للمحركات القوية والروبوتات الكبيرة.', { c: 0xd35400, V: 22.2, w: 0.58, h: 0.52, d: 0.26 });
+  v('pb12', 'b', ['bat'], 'بطارية رصاصية 12V', '🔋', '12V · ثقيلة ورخيصة', 'تعطي تياراً كبيراً بوزن كبير.', { c: 0x2c3e50, V: 12, w: 0.7, h: 0.5, d: 0.34 });
+  v('pwb', 'b', ['bat'], 'باور بانك 5V', '🔋', '5V · USB', 'يشغّل Raspberry Pi وJetson مباشرة.', { c: 0x566573, V: 5, w: 0.34, h: 0.4, d: 0.16 });
+  v('p36', 'b', ['bat'], 'حزمة 36V', '🔋', '36V · صناعية', 'لمحركات صناعية كبيرة؛ تحتاج منظّمات.', { c: 0x6c3483, V: 36, w: 0.68, h: 0.58, d: 0.32 });
+  v('b33', 'g', ['reg'], 'منظّم Buck 3.3V', '🔌', 'خرج 3.3V', 'للمتحكمات والحساسات منخفضة الجهد.', { c: 0x1f6f3f, out: 3.3 });
+  v('b74', 'g', ['reg'], 'منظّم Buck 7.4V', '🔌', 'خرج 7.4V', 'لتغذية السيرفوهات القوية من بطارية أعلى.', { c: 0x1f6f3f, out: 7.4 });
+  v('b9', 'g', ['reg'], 'منظّم Buck 9V', '🔌', 'خرج 9V', 'مناسب لـ Arduino وسيرفوهات 9V.', { c: 0x1f6f3f, out: 9 });
+  v('b24', 'g', ['reg'], 'منظّم Buck 24V', '🔌', 'خرج 24V', 'يخفض 36V إلى 24V للمحركات الصناعية.', { c: 0x1f6f3f, out: 24 });
+  v('pm6', 'h', ['pump'], 'مضخة هيدروليكية 6V', '💧', '5–7V · ضغط منخفض', 'للمشغّلات الدقيقة الصغيرة.', { c: 0x5dade2, a: 5, b: 7 });
+  v('pm18', 'h', ['pump'], 'مضخة هيدروليكية 18V', '💧', '14–22V · ضغط عالٍ', 'تناسب بطارية 14.8V للأحمال المتوسطة.', { c: 0x2e86c1, a: 14, b: 22 });
+  v('thc', 'k', ['cam'], 'كاميرا حرارية MLX90640', '🌡️', 'ترى الحرارة', 'لرصد الأشخاص والأجسام الساخنة.', { l: 2, r: 0.045 });
+  v('pic3', 'k', ['cam'], 'Pi Camera 3', '📷', '12MP · تركيز تلقائي', 'جودة عالية وتحتاج حاسوباً مثل Raspberry Pi.', { l: 3, r: 0.05 });
+  v('fish', 'k', ['cam'], 'كاميرا عين السمكة', '📷', 'زاوية واسعة', 'ترى محيطاً واسعاً جداً أمام الروبوت.', { l: 3, r: 0.06 });
+  v('oak', 'k', ['cam'], 'OAK-D Lite', '👁️', 'عمق + ذكاء اصطناعي', 'كاميرا عمق بمعالج ذكاء اصطناعي مدمج.', { l: 4, r: 0.04, bar: 1 });
+  v('icm', 'n', ['imu'], 'IMU ICM-20948', '🧭', '9 محاور', 'يضيف بوصلة مغناطيسية للدقة في الاتجاه.', {});
+  v('bmi', 'n', ['imu'], 'IMU BMI160', '🧭', 'استهلاك منخفض', 'صغير وموفّر للطاقة للأجسام الخفيفة.', {});
+  v('tof', 'n', ['rng'], 'ليزر ToF VL53L0X', '📡', 'دقة مليمترية', 'يقيس المسافة بالضوء بدقة عالية ومدى قصير.', { t: 1 });
+  v('rpl', 'n', ['rng'], 'RPLiDAR A1', '🛰️', 'مسح 360° رخيص', 'ليدار اقتصادي لبناء خرائط الغرفة.', { t: 2 });
+  v('rad', 'n', ['rng'], 'رادار mmWave', '📡', 'يعمل بالغبار والظلام', 'يكشف الحركة والمسافة في الظروف الصعبة.', { t: 0 });
+  v('hx', 'n', ['fsr'], 'خلية حمل HX711', '🦶', 'وزن دقيق', 'تقيس وزن الجسم على القدم بدقة عالية.', {});
+  v('torsoW', 'fs', ['torso'], 'جذع عريض', '🧱', 'مساحة أكبر للقطع', 'صدر أعرض يتسع لبطاريات أكبر.', { w: 1.2 });
+  v('torsoS', 'fs', ['torso'], 'جذع نحيف', '🧱', 'خفيف ورشيق', 'جذع ضيق يقلل الوزن.', { w: 0.85 });
+  v('uarm2', 'fs', ['uarm'], 'عضد سميك', '💪', 'يتحمل أحمالاً أكبر', 'أنبوب أسمك لذراع قوية.', { r: 0.12 });
+  v('uarm3', 'fs', ['uarm'], 'عضد نحيف', '💪', 'خفيف جداً', 'أنبوب رفيع لحركة سريعة.', { r: 0.065 });
+  v('farm2', 'fs', ['farm'], 'ساعد سميك', '🦾', 'متين', 'ساعد أقوى لحمل الأشياء.', { r: 0.105 });
+  v('farm3', 'fs', ['farm'], 'ساعد نحيف', '🦾', 'خفيف', 'ساعد رفيع لتقليل العزم المطلوب.', { r: 0.06 });
+  v('thigh2', 'fs', ['thigh'], 'فخذ عريض', '🦵', 'قوة أكبر', 'فخذ عريض لتحمل الوزن الثقيل.', { w: 0.3 });
+  v('thigh3', 'fs', ['thigh'], 'فخذ نحيف', '🦵', 'سريع الحركة', 'فخذ رفيع وخفيف.', { w: 0.17 });
+  v('shank2', 'fs', ['shank'], 'ساق عريضة', '🦵', 'ثبات أكبر', 'ساق عريضة للروبوتات الثقيلة.', { w: 0.27 });
+  v('shank3', 'fs', ['shank'], 'ساق نحيفة', '🦵', 'خفيفة', 'ساق رفيعة لحركة رشيقة.', { w: 0.15 });
+  v('foot2', 'fs', ['foot'], 'قدم كبيرة', '🦶', 'توازن أفضل', 'قاعدة أوسع لثبات أكبر.', { w: 0.4, l: 0.7 });
+  v('foot3', 'fs', ['foot'], 'قدم صغيرة', '🦶', 'خفيفة', 'قاعدة صغيرة تحتاج توازناً دقيقاً.', { w: 0.22, l: 0.45 });
+  v('hball', 'fh', ['head'], 'رأس كروي', '⚪', 'شريط ضوئي', 'رأس مستدير بشريط عيون مضيء.', { k: 3 });
+  v('hcyc', 'fh', ['head'], 'رأس بعين واحدة', '👁️', 'عدسة كبيرة', 'رأس صناعي بعدسة واحدة بارزة.', { k: 4 });
+  v('hant', 'fh', ['head'], 'رأس بهوائيات', '📡', 'استقبال قوي', 'رأس أسطواني بهوائيين مضيئين.', { k: 5 });
+  v('hvac', 'fa', ['hand'], 'ماصّة هوائية', '🔘', 'تمسك الأسطح الملساء', 'تلتقط الصناديق والألواح بالشفط.', { k: 3 });
+  v('hmag', 'fa', ['hand'], 'مغناطيس كهربائي', '🧲', 'يلتقط المعادن', 'يرفع القطع الحديدية ويتركها بقطع التيار.', { k: 4 });
+  v('h3f', 'fa', ['hand'], 'يد بثلاثة أصابع', '🤟', 'توازن بين البساطة والمرونة', 'تمسك الأجسام الدائرية بثبات.', { k: 5 });
+
+  // ===== دفعة ثالثة =====
+  v('mg995', 'j', JT, 'سيرفو MG995', '⚙️', '4.8–7.2V · 13 كغ·سم', 'قوي واقتصادي للأطراف المتوسطة.', { c: 0x8e44ad, r: 0.09, a: 4.8, b: 7.2 });
+  v('hs645', 'j', JT, 'سيرفو HS-645MG', '⚙️', '4.8–6V · تروس معدنية', 'سلس ودقيق للأذرع والأطراف.', { c: 0x1a5276, r: 0.09, a: 4.8, b: 6 });
+  v('ds35', 'j', JT, 'سيرفو DS3235', '⚙️', '4.8–7.2V · 35 كغ·سم', 'من أقوى السيرفوهات الاقتصادية.', { c: 0xb03a2e, r: 0.105, a: 4.8, b: 7.2 });
+  v('xl430', 'j', JT, 'Dynamixel XL430', '🧩', '6.5–12V · تغذية راجعة', 'سيرفو ذكي مدمج وأنيق.', { c: 0x17202a, r: 0.085, a: 6.5, b: 12 });
+  v('xm430', 'j', JT, 'Dynamixel XM430', '🧩', '10–14.8V · عزم عالٍ', 'للمفاصل الأساسية في الروبوتات المتوسطة.', { c: 0x212f3d, r: 0.105, a: 10, b: 14.8 });
+  v('nm14', 'j', JT, 'ستيبر NEMA14', '🔩', '12–24V · صغير ودقيق', 'ستيبر مصغّر للمفاصل الدقيقة.', { c: 0x909497, r: 0.095, a: 12, b: 24 });
+  v('gb37', 'j', JT, 'محرك DC GB37', '⚙️', '6–12V · علبة تروس', 'بسيط وقوي لكنه بلا تحديد زاوية.', { c: 0x5d6d7e, r: 0.1, a: 6, b: 12 });
+  v('bl6', 'j', JT, 'BLDC عالي الجهد', '🌀', '14–25V · سرعة عالية', 'لروبوتات سريعة وقوية مع ESC.', { c: 0x0e6655, r: 0.12, a: 14, b: 25 });
+  v('nano33', 'c', ['ctl'], 'Arduino Nano 33 BLE', '📶', '5–21V · بلوتوث', 'متحكم صغير ببلوتوث ومستشعرات مدمجة.', { c: 0x0b7a75, w: 0.2, h: 0.4, a: 5, b: 21, l: 2 });
+  v('xiao', 'c', ['ctl'], 'Seeed XIAO ESP32S3', '📶', '3.7–5.5V · صغير جداً', 'بحجم الإبهام مع واي فاي وبلوتوث.', { c: 0x0e6251, w: 0.14, h: 0.3, a: 3.7, b: 5.5, l: 2 });
+  v('esp3s', 'c', ['ctl'], 'ESP32-S3', '📶', '5–12V · ذكاء مدمج', 'يعالج أوامر صوتية وصوراً بسيطة.', { c: 0x1c2833, w: 0.22, h: 0.4, a: 5, b: 12, l: 2 });
+  v('opi', 'c', ['ctl'], 'Orange Pi 5', '🍊', '4.8–5.3V · 8 أنوية', 'حاسوب قوي ورخيص للرؤية.', { c: 0xd35400, w: 0.36, h: 0.5, a: 4.8, b: 5.3, l: 3 });
+  v('coral', 'c', ['ctl'], 'Google Coral Dev', '🤖', '4.8–5.3V · مسرّع TPU', 'يشغّل نماذج الذكاء الاصطناعي بسرعة.', { c: 0x2874a6, w: 0.38, h: 0.5, a: 4.8, b: 5.3, l: 4 });
+  v('bbb', 'c', ['ctl'], 'BeagleBone Black', '🫘', '4.5–5.5V · زمن حقيقي', 'ممتاز للتحكم الصناعي اللحظي.', { c: 0x2c3e50, w: 0.36, h: 0.5, a: 4.5, b: 5.5, l: 3 });
+  v('lp5', 'b', ['bat'], 'LiPo 18.5V (5S)', '🔋', '18.5V · قدرة عالية', 'للمحركات الكبيرة قبل الوصول إلى 24V.', { c: 0xca6f1e, V: 18.5, w: 0.54, h: 0.52, d: 0.24 });
+  v('p48', 'b', ['bat'], 'حزمة 48V', '🔋', '48V · صناعية ضخمة', 'لمحركات خارجية قوية؛ تحتاج منظّمات.', { c: 0x4a235a, V: 48, w: 0.7, h: 0.6, d: 0.34 });
+  v('sc', 'b', ['bat'], 'مكثف فائق 5.4V', '⚡', '5.4V · شحن سريع جداً', 'يشحن خلال ثوانٍ ويعطي دفعة قصيرة.', { c: 0xf4d03f, V: 5.4, w: 0.3, h: 0.3, d: 0.16 });
+  v('pp3', 'b', ['bat'], 'بطارية 9V مربعة', '🔋', '9V · صغيرة', 'للتجارب الصغيرة والمتحكمات فقط.', { c: 0x34495e, V: 9, w: 0.26, h: 0.34, d: 0.12 });
+  v('b4', 'g', ['reg'], 'منظّم Buck 4.8V', '🔌', 'خرج 4.8V', 'مثالي لمتحكمات ومستقبلات حساسة.', { c: 0x1f6f3f, out: 4.8 });
+  v('b84', 'g', ['reg'], 'منظّم Buck 8.4V', '🔌', 'خرج 8.4V', 'لتغذية سيرفوهات عالية الجهد.', { c: 0x1f6f3f, out: 8.4 });
+  v('b18', 'g', ['reg'], 'منظّم Buck 18V', '🔌', 'خرج 18V', 'يخفض 24V أو 36V إلى 18V.', { c: 0x1f6f3f, out: 18 });
+  v('pm36', 'h', ['pump'], 'مضخة هيدروليكية 36V', '💧', '30–40V · قوة صناعية', 'للروبوتات الضخمة وأحمال ثقيلة جداً.', { c: 0x154360, a: 30, b: 40 });
+  v('arduc', 'k', ['cam'], 'ArduCAM Mini', '📷', '2MP · بسيطة', 'تناسب Arduino ومتحكمات صغيرة.', { l: 1, r: 0.04 });
+  v('lep', 'k', ['cam'], 'FLIR Lepton', '🌡️', 'كاميرا حرارية', 'صورة حرارية دقيقة لتحديد الأجسام الساخنة.', { l: 3, r: 0.05 });
+  v('zed', 'k', ['cam'], 'ZED 2 ستيريو', '👁️', 'عمق + تتبع حركة', 'عدستان ترسمان العمق وتتبعان موقع الروبوت.', { l: 4, r: 0.04, bar: 1 });
+  v('k4', 'k', ['cam'], 'كاميرا 4K', '📷', '4K · تفاصيل عالية', 'صورة فائقة الوضوح وتحتاج معالجاً قوياً.', { l: 4, r: 0.07 });
+  v('m9', 'n', ['imu'], 'IMU MPU9250', '🧭', '9 محاور', 'تسارع ودوران وبوصلة في شريحة واحدة.', {});
+  v('lsm', 'n', ['imu'], 'IMU LSM6DSO', '🧭', 'منخفض الضجيج', 'قراءات هادئة ودقيقة للتوازن.', {});
+  v('shp', 'n', ['rng'], 'Sharp GP2Y IR', '📡', 'مدى 10–80سم', 'مستشعر مسافة تناظري بسيط.', { t: 1 });
+  v('tfm', 'n', ['rng'], 'TFmini-S ليدار', '📡', 'مدى 12م', 'ليدار نقطي صغير للمسافات الطويلة.', { t: 1 });
+  v('ydl', 'n', ['rng'], 'YDLIDAR X4', '🛰️', 'مسح 360° اقتصادي', 'بديل رخيص لبناء خرائط ثنائية الأبعاد.', { t: 2 });
+  v('pzo', 'n', ['fsr'], 'حساس بيزو للضغط', '🦶', 'يكشف الصدمات', 'يلتقط لحظة اصطدام القدم بالأرض.', {});
+  v('tch', 'n', ['fsr'], 'حساس لمس سعوي', '🦶', 'يكشف الملامسة', 'يحس بالتلامس دون ضغط قوي.', {});
+  v('mic1', 'x', ['mic'], 'ميكروفون MEMS', '🎤', 'صغير ودقيق', 'يلتقط الأوامر الصوتية.', { c: 0x2c3e50 });
+  v('mic4', 'x', ['mic'], 'صفيف ميكروفونات ×4', '🎤', 'يحدد اتجاه الصوت', 'يعرف من أين جاء الصوت.', { c: 0x1a5276 });
+  v('micu', 'x', ['mic'], 'ميكروفون USB', '🎤', 'جودة عالية', 'للتسجيل والتعرف على الكلام.', { c: 0x7f8c8d });
+  v('spk3', 'x', ['spk'], 'مكبّر صوت 3W', '🔊', 'صوت واضح', 'للتنبيهات والكلام القصير.', { r: 0.08 });
+  v('spk10', 'x', ['spk'], 'مكبّر صوت 10W', '🔊', 'صوت قوي', 'للأماكن الواسعة والموسيقى.', { r: 0.12 });
+  v('ledr', 'x', ['led'], 'شريط LED RGB', '💡', 'ألوان متعددة', 'يعبّر عن حالة الروبوت بالألوان.', { c: 0xaa66ff, w: 0.5, hh: 0.04 });
+  v('ledw', 'x', ['led'], 'LED أحمر تحذير', '🚨', 'إنذار', 'يومض عند الخطر أو انخفاض البطارية.', { c: 0xff3030, w: 0.4, hh: 0.04 });
+  v('ledm', 'x', ['led'], 'مصفوفة LED 8×8', '🔆', 'رموز ووجوه', 'تعرض رموزاً وتعابير بسيطة.', { c: 0x35d0ff, w: 0.3, hh: 0.3 });
+  v('antw', 'x', ['ant'], 'هوائي واي فاي', '📡', '2.4GHz', 'يقوّي الاتصال اللاسلكي.', { c: 0x35d0ff, hgt: 0.3 });
+  v('antg', 'x', ['ant'], 'هوائي GPS', '🛰️', 'تحديد الموقع', 'يحدد موقع الروبوت في الهواء الطلق.', { c: 0x2ecc71, hgt: 0.2 });
+  v('antl', 'x', ['ant'], 'هوائي LoRa', '📡', 'مدى بعيد', 'اتصال بعيد المدى بطاقة قليلة.', { c: 0xff9f1c, hgt: 0.5 });
+  v('pk1', 'x', ['pack'], 'حقيبة معدات', '🎒', 'تحمل أدوات صغيرة', 'للأدوات وقطع الغيار.', { c: 0x34495e, w: 0.6, h: 0.7 });
+  v('pk2', 'x', ['pack'], 'حاوية شحن', '📦', 'لحمل البضائع', 'للروبوتات التي تنقل الأغراض.', { c: 0xb9770e, w: 0.8, h: 0.9 });
+  v('pk3', 'x', ['pack'], 'لوح شمسي', '☀️', 'طاقة إضافية', 'يشحن البطارية في الضوء.', { c: 0x1b4f9c, w: 0.8, h: 0.9 });
+  v('h6', 'fh', ['head'], 'رأس مخروطي', '🔺', 'شكل هرمي', 'رأس مدبب بعين مضيئة.', { k: 6 });
+  v('h7', 'fh', ['head'], 'رأس بوجه مبتسم', '😀', 'تعابير ودودة', 'رأس بعينين وفم للتفاعل مع الأطفال.', { k: 7 });
+  v('ha6', 'fa', ['hand'], 'مفتاح براغي', '🔧', 'أداة تركيب', 'يد مزودة بأداة لفّ البراغي.', { k: 6 });
+  v('ha7', 'fa', ['hand'], 'خطّاف', '🪝', 'يرفع ويشدّ', 'يحمل الحبال والأكياس.', { k: 7 });
+  v('ha8', 'fa', ['hand'], 'كشاف ضوئي', '🔦', 'إضاءة', 'يد تضيء أمام الروبوت.', { k: 8 });
+  // ===== هياكل غير بشرية =====
+  v('n20', 'j', ['wheel'], 'عجلة بمحرك N20', '🛞', '3–9V · صغيرة', 'للروبوتات الخفيفة جداً.', { c: 0x7f8c8d, r: 0.07, a: 3, b: 9, wr: 0.25 });
+  v('tt', 'j', ['wheel'], 'عجلة TT موتور', '🛞', '3–9V · تعليمية', 'شائعة في الشاسيهات التعليمية.', { c: 0xf1c40f, r: 0.08, a: 3, b: 9, wr: 0.3 });
+  v('gbw', 'j', ['wheel'], 'عجلة بمحرك GB37', '🛞', '6–12V · عزم جيد', 'متوسطة القوة لروبوتات المنازل.', { c: 0x5d6d7e, r: 0.1, a: 6, b: 12, wr: 0.35 });
+  v('omni', 'j', ['wheel'], 'عجلة أومني', '🛞', '6–12V · تتحرك جانبياً', 'تسمح بالحركة في كل الاتجاهات.', { c: 0x1abc9c, r: 0.1, a: 6, b: 12, wr: 0.35 });
+  v('hub', 'j', ['wheel'], 'محرك داخل العجلة Hub', '🛞', '12–24V · قوي', 'للروبوتات الكبيرة والثقيلة.', { c: 0xc0392b, r: 0.13, a: 12, b: 24, wr: 0.4 });
+  v('trk', 'j', ['wheel'], 'عجلة جنزير', '⛓️', '12–24V · تتسلق', 'تناسب الأرض الوعرة.', { c: 0x34495e, r: 0.12, a: 12, b: 24, wr: 0.45 });
+  v('bl18', 'j', ['rotor'], 'محرك مروحة 1806', '🌀', '7–12V · درون صغير', 'للدرون الخفيف (2S–3S).', { c: 0x2874a6, r: 0.06, a: 7, b: 12 });
+  v('bl22', 'j', ['rotor'], 'محرك مروحة 2204', '🌀', '11–17V · درون سباق', 'سريع للدرون متوسط الحجم (3S–4S).', { c: 0x1e8449, r: 0.08, a: 11, b: 17 });
+  v('bl23', 'j', ['rotor'], 'محرك مروحة 2306', '🌀', '11–17V · رفع جيد', 'قوة رفع أعلى للدرون المتوسط.', { c: 0xb9770e, r: 0.09, a: 11, b: 17 });
+  v('bl28', 'j', ['rotor'], 'محرك مروحة 2812', '🌀', '14–26V · درون كبير', 'لحمل الكاميرات والأحمال.', { c: 0x922b21, r: 0.11, a: 14, b: 26 });
+  v('bl41', 'j', ['rotor'], 'محرك مروحة 4114', '🌀', '22–30V · درون ثقيل', 'قوة رفع هائلة للدرون الصناعي.', { c: 0x6c3483, r: 0.13, a: 22, b: 30 });
+  v('qb1', 'fs', ['qbody'], 'جسم رباعي قياسي', '🐕', 'متوازن', 'جسم لحيوان رباعي الأرجل.', { w: 0.8 });
+  v('qb2', 'fs', ['qbody'], 'جسم رباعي عريض', '🐕', 'ثبات أعلى', 'أعرض وأثقل لحمل أكثر.', { w: 1.0 });
+  v('qb3', 'fs', ['qbody'], 'جسم رباعي نحيف', '🐕', 'خفيف', 'نحيف يقلل الوزن.', { w: 0.65 });
+  v('ch1', 'fs', ['chassis'], 'شاسيه أكريليك', '🛞', 'خفيف وشفاف', 'شاسيه تعليمي رخيص.', { w: 1.5 });
+  v('ch2', 'fs', ['chassis'], 'شاسيه ألمنيوم', '🛞', 'متين', 'شاسيه قوي لحمل الأجهزة.', { w: 1.7 });
+  v('ch3', 'fs', ['chassis'], 'شاسيه فولاذ ثقيل', '🛞', 'للأحمال الثقيلة', 'ثقيل جداً ويحتاج محركات قوية.', { w: 1.9 });
+  v('db1', 'fs', ['dbody'], 'هيكل درون X صغير', '🚁', 'خفيف', 'هيكل مصغّر للطيران الداخلي.', { w: 0.7 });
+  v('db2', 'fs', ['dbody'], 'هيكل درون X كبير', '🚁', 'يحمل أكثر', 'هيكل أكبر وأثقل للأحمال.', { w: 1.0 });
+  v('bs1', 'fs', ['base'], 'قاعدة معلّقة قياسية', '🦾', 'تثبّت الذراع', 'قاعدة سقفية بعمود دعم.', { w: 1.2 });
+  v('bs2', 'fs', ['base'], 'قاعدة معلّقة عريضة', '🦾', 'ثبات أكبر', 'قاعدة أثقل لأذرع قوية.', { w: 1.6 });
+  v('f4', 'c', ['ctl'], 'متحكم طيران F4', '🛩️', '7–25V · للدرون', 'لوحة طيران جاهزة ومناسبة لبطاريات الدرون.', { c: 0x1b2631, w: 0.24, h: 0.24, a: 7, b: 25, l: 1 });
+  v('pixh', 'c', ['ctl'], 'Pixhawk', '🛩️', '4.8–5.4V · طيار آلي', 'متحكم طيار آلي احترافي.', { c: 0x2c3e50, w: 0.34, h: 0.3, a: 4.8, b: 5.4, l: 3 });
+  v('mic5', 'x', ['mic'], 'ميكروفون اتجاهي', '🎤', 'يعزل الضجيج', 'يلتقط الصوت من الأمام فقط.', { c: 0x641e16 });
+  v('ledn', 'x', ['led'], 'LED نيون أزرق', '💡', 'إضاءة زينة', 'توهج أزرق للعروض.', { c: 0x2e86c1, w: 0.5, hh: 0.05 });
+  v('antb', 'x', ['ant'], 'هوائي بلوتوث', '📡', '2.4GHz', 'اتصال بالجوال.', { c: 0x8e44ad, hgt: 0.25 });
+  v('pk4', 'x', ['pack'], 'صندوق أدوات', '🧰', 'يحمل أدوات', 'للإصلاح الميداني.', { c: 0xc0392b, w: 0.7, h: 0.5 });
+  var VID = {}; VS.forEach(function (o) { VID[o.id] = o; });
+  function defV(t) { for (var i = 0; i < VS.length; i++) if (VS[i].st.indexOf(t) >= 0) return VS[i]; }
+
+  // ===== المجسّمات =====
+  function joint(o) {
+    var x = o ? o.x : { c: 0x2a6fd8, r: 0.08 }, g = grp(sph(x.r * 1.3, M(x.c, 0.4, 0.4)));
+    if (x.h) g.add(cyl(0.06, 0.26, M(0xf1c40f, 0.5, 0.4), 0, -0.2, 0.15), cyl(0.025, 0.28, ALU, 0, -0.45, 0.15));
+    else g.add(cyl(x.r * 0.7, x.r * 2.6, DARK, 0, 0, 0).rotateZ(Math.PI / 2));
+    return g;
+  }
+  function headShell(k) {
+    var m = M([0xe0b89a, 0x8896a8, 0x3b6fd4, 0x7ee0b0, 0xb48ae8, 0xe8b04a, 0xff6b6b, 0xf4d03f][k], 0.2, 0.5, 0, 0.42);
+    if (k === 6) return grp(at(new T.Mesh(new T.ConeGeometry(0.4, 0.75, 4), m), 0, 0, 0), sph(0.07, EYE, 0, -0.05, 0.22));
+    if (k === 7) return grp(box(0.72, 0.62, 0.6, m), sph(0.06, EYE, -0.14, 0.08, 0.31), sph(0.06, EYE, 0.14, 0.08, 0.31), box(0.26, 0.04, 0.04, EYE, 0, -0.12, 0.31));
+    if (k === 3) return grp(sph(0.38, m), box(0.5, 0.1, 0.04, EYE, 0, 0.04, 0.36));
+    if (k === 4) return grp(box(0.7, 0.6, 0.6, m), sph(0.13, EYE, 0, 0, 0.3), cyl(0.16, 0.04, DARK, 0, 0, 0.31).rotateX(Math.PI / 2));
+    if (k === 5) return grp(cyl(0.34, 0.62, m, 0, 0, 0), cyl(0.015, 0.3, ALU, -0.15, 0.45, 0), cyl(0.015, 0.3, ALU, 0.15, 0.45, 0), sph(0.03, EYE, -0.15, 0.6, 0), sph(0.03, EYE, 0.15, 0.6, 0), box(0.4, 0.08, 0.04, EYE, 0, 0.05, 0.34));
+    if (k === 0) { var s = sph(0.36, m); s.scale.set(0.95, 1.12, 1); return grp(s, sph(0.05, m, 0, -0.02, 0.36), sph(0.07, m, -0.36, 0, 0), sph(0.07, m, 0.36, 0, 0)); }
+    if (k === 1) return grp(box(0.72, 0.62, 0.62, m), box(0.58, 0.24, 0.05, DARK, 0, 0.05, 0.33), box(0.06, 0.22, 0.06, ALU, 0, 0.42, 0));
+    return grp(box(0.74, 0.64, 0.62, m), box(0.6, 0.46, 0.04, M(0x0b3d6b, 0, 0.3, 0x1a6fb5), 0, 0, 0.33));
+  }
+  function hand(k) {
+    if (k === 6) return grp(cyl(0.04, 0.1, DARK, 0, -0.05, 0), cyl(0.02, 0.28, ALU, 0, -0.24, 0), box(0.08, 0.04, 0.04, ALU, 0, -0.4, 0));
+    if (k === 7) return grp(cyl(0.03, 0.14, DARK, 0, -0.07, 0), at(new T.Mesh(new T.TorusGeometry(0.08, 0.02, 8, 16, Math.PI * 1.5), ALU), 0, -0.22, 0));
+    if (k === 8) return grp(cyl(0.07, 0.14, DARK, 0, -0.07, 0), cyl(0.09, 0.05, EYE, 0, -0.17, 0));
+    if (k === 3) return grp(cyl(0.05, 0.12, DARK, 0, -0.06, 0), cyl(0.11, 0.03, ALU, 0, -0.16, 0));
+    if (k === 4) return grp(cyl(0.07, 0.1, DARK, 0, -0.05, 0), cyl(0.12, 0.05, EYE, 0, -0.14, 0));
+    if (k === 5) return grp(sph(0.1, DARK, 0, -0.05, 0), box(0.035, 0.2, 0.05, ALU, -0.07, -0.19, 0), box(0.035, 0.2, 0.05, ALU, 0, -0.19, 0.06), box(0.035, 0.2, 0.05, ALU, 0.07, -0.19, 0));
+    if (k === 1) { var g = grp(box(0.22, 0.12, 0.08, DARK, 0, -0.06, 0)); for (var i = 0; i < 5; i++) g.add(box(0.035, 0.16, 0.04, ALU, -0.09 + i * 0.045, -0.2, 0)); return g; }
+    if (k === 2) return grp(box(0.2, 0.06, 0.1, DARK, 0, -0.03, 0), box(0.025, 0.2, 0.08, ALU, -0.07, -0.16, 0), box(0.025, 0.2, 0.08, ALU, 0.07, -0.16, 0));
+    return grp(sph(0.11, DARK, 0, -0.06, 0), box(0.04, 0.2, 0.06, ALU, -0.05, -0.2, 0), box(0.04, 0.2, 0.06, ALU, 0.05, -0.2, 0));
+  }
+  var B = {
+    torso: function (o) { var w = (o || defV('torso')).x.w || 1; return grp(box(w, 1.3, 0.55, FM), box(w + 0.1, 0.12, 0.6, ALU, 0, 0.7, 0), box(w - 0.1, 0.1, 0.5, ALU, 0, -0.65, 0)); },
+    bat: function (o) { var x = (o || defV('bat')).x; return grp(box(x.w, x.h, x.d, M(x.c, 0.2, 0.5, x.c & 0x3f3f3f)), box(0.1, 0.05, 0.05, ALU, 0, x.h / 2 + 0.02, 0)); },
+    reg: function (o) { return grp(box(0.3, 0.05, 0.2, M((o || defV('reg')).x.c, 0.2, 0.6)), box(0.12, 0.1, 0.12, ALU, 0, 0.07, 0)); },
+    pump: function (o) { var c = M((o || defV('pump')).x.c, 0.5, 0.4); return grp(cyl(0.1, 0.28, c, -0.08, 0, 0), box(0.18, 0.24, 0.2, DARK, 0.14, 0, 0)); },
+    imu: function () { return grp(box(0.14, 0.02, 0.14, M(0x6a2c91, 0.2, 0.5))); },
+    neck: joint, shoulder: joint, elbow: joint, hip: joint, knee: joint,
+    head: function (o) { return headShell((o || defV('head')).x.k); },
+    ctl: function (o) { var x = (o || defV('ctl')).x; return grp(box(x.w, x.h, 0.03, M(x.c, 0.2, 0.5)), box(x.w * 0.4, x.h * 0.25, 0.05, DARK, 0, x.h * 0.1, 0.03), box(0.08, 0.05, 0.06, ALU, 0, -x.h / 2 + 0.02, 0)); },
+    cam: function (o) {
+      var x = (o || defV('cam')).x; if (x.bar) return grp(box(0.5, 0.1, 0.08, DARK), sph(0.04, EYE, -0.15, 0, 0.05), sph(0.04, EYE, 0, 0, 0.05), sph(0.04, EYE, 0.15, 0, 0.05));
+      return grp(sph(x.r, EYE, -0.14, 0, 0), sph(x.r, EYE, 0.14, 0, 0));
+    },
+    rng: function (o) {
+      var t = (o || defV('rng')).x.t; if (t === 2) return grp(cyl(0.1, 0.08, DARK, 0, 0, 0), cyl(0.05, 0.04, EYE, 0, 0.06, 0));
+      if (t === 1) return grp(box(0.12, 0.06, 0.05, DARK));
+      return grp(box(0.28, 0.12, 0.04, ALU), cyl(0.045, 0.04, DARK, -0.07, 0, 0.03).rotateX(Math.PI / 2), cyl(0.045, 0.04, DARK, 0.07, 0, 0.03).rotateX(Math.PI / 2));
+    },
+    uarm: function (o) { return grp(cyl((o || defV('uarm')).x.r || 0.09, 0.55, FM, 0, -0.275, 0)); },
+    farm: function (o) { return grp(cyl((o || defV('farm')).x.r || 0.08, 0.5, FM, 0, -0.25, 0)); },
+    hand: function (o) { return hand((o || defV('hand')).x.k); },
+    thigh: function (o) { var w = (o || defV('thigh')).x.w || 0.22; return grp(box(w, 0.6, w * 1.09, FM, 0, -0.3, 0)); },
+    shank: function (o) { var w = (o || defV('shank')).x.w || 0.2; return grp(box(w, 0.6, w * 1.1, FM, 0, -0.3, 0)); },
+    foot: function (o) { var x = (o || defV('foot')).x; return grp(box(x.w || 0.3, 0.14, x.l || 0.55, DARK, 0, -0.07, 0.1)); },
+    fsr: function () { return grp(cyl(0.06, 0.015, M(0xe67e22, 0.1, 0.6), 0, -0.14, 0.12)); },
+    qbody: function (o) { var w = (o || defV('qbody')).x.w || 0.8; return grp(box(w, 0.5, 1.7, FM), box(w + 0.1, 0.08, 1.8, ALU, 0, 0.28, 0), box(w - 0.1, 0.08, 1.6, ALU, 0, -0.28, 0)); },
+    chassis: function (o) { var w = (o || defV('chassis')).x.w || 1.7; return grp(box(w, 0.25, 1.9, FM), box(w - 0.2, 0.1, 1.7, ALU, 0, 0.18, 0)); },
+    dbody: function (o) { var w = (o || defV('dbody')).x.w || 0.8; return grp(box(w, 0.18, w, FM), box(2.2, 0.05, 0.1, ALU).rotateY(Math.PI / 4), box(2.2, 0.05, 0.1, ALU).rotateY(-Math.PI / 4)); },
+    base: function (o) { var w = (o || defV('base')).x.w || 1.2; return grp(box(w, 0.15, w, ALU, 0, 0, 0), cyl(0.1, 3.2, DARK, -w / 2 + 0.1, -1.6, 0)); },
+    wheel: function (o) { var x = (o || defV('wheel')).x; return grp(cyl(x.wr, 0.18, M(0x20242c, 0.1, 0.9), 0, 0, 0).rotateZ(Math.PI / 2), cyl(x.wr * 0.5, 0.2, M(x.c, 0.5, 0.4), 0, 0, 0).rotateZ(Math.PI / 2)); },
+    rotor: function (o) { var x = (o || defV('rotor')).x; return grp(cyl(x.r, 0.14, M(x.c, 0.4, 0.4)), box(0.8, 0.01, 0.07, ALU, 0, 0.09, 0)); },
+    mic: function (o) { var x = (o || defV('mic')).x; return grp(cyl(0.03, 0.08, M(x.c, 0.3, 0.5), 0, 0, 0).rotateX(Math.PI / 2), sph(0.035, ALU, 0, 0, 0.05)); },
+    ant: function (o) { var x = (o || defV('ant')).x, h = x.hgt; return grp(cyl(0.012, h, ALU, 0, h / 2, 0), sph(0.03, M(x.c, 0, 0.3, x.c), 0, h, 0)); },
+    spk: function (o) { var r = (o || defV('spk')).x.r; return grp(cyl(r, 0.04, DARK, 0, 0, 0).rotateX(Math.PI / 2), cyl(r * 1.2, 0.02, ALU, 0, 0, -0.01).rotateX(Math.PI / 2)); },
+    led: function (o) { var x = (o || defV('led')).x; return grp(box(x.w, x.hh, 0.03, M(x.c, 0, 0.3, x.c))); },
+    pack: function (o) { var x = (o || defV('pack')).x; return grp(box(x.w, x.h, 0.2, M(x.c, 0.3, 0.6)), box(x.w * 0.8, 0.05, 0.05, DARK, 0, x.h / 2 + 0.02, 0)); }
+  };
+
+  // ===== الأماكن (هيكل بشري) =====
+  var SL = [], S = {};
+  function sl(id, t, x, y, z, p, o) { var s = { id: id, type: t, pos: new T.Vector3(x, y, z), parent: p || null, opt: !!o }; SL.push(s); S[id] = s; }
+  var SLF = {}; SLF.human = function () {
+  sl('torso', 'torso', 0, 2.1, 0); sl('bat', 'bat', 0, 2.3, 0.05, 'torso'); sl('reg', 'reg', -0.25, 1.8, 0.05, 'torso', 1); sl('pump', 'pump', 0.22, 1.85, -0.12, 'torso', 1); sl('imu', 'imu', 0, 1.65, 0.15, 'torso', 1);
+  sl('neck', 'neck', 0, 2.85, 0, 'torso'); sl('head', 'head', 0, 3.3, 0, 'neck'); sl('ctl', 'ctl', 0, 3.3, -0.1, 'head'); sl('cam', 'cam', 0, 3.33, 0.37, 'head', 1); sl('rng', 'rng', 0, 3.68, 0, 'head', 1);
+  sl('mic', 'mic', 0, 3.08, 0.34, 'head', 1); sl('ant', 'ant', 0, 3.8, -0.15, 'head', 1); sl('spk', 'spk', 0, 2.5, 0.3, 'torso', 1); sl('led', 'led', 0, 2.0, 0.29, 'torso', 1); sl('pack', 'pack', 0, 2.2, -0.4, 'torso', 1);
+  [-1, 1].forEach(function (s, k) { var q = k ? 'R' : 'L', x = s * 0.62;
+    sl('sh' + q, 'shoulder', x, 2.55, 0, 'torso'); sl('ua' + q, 'uarm', x, 2.55, 0, 'sh' + q); sl('el' + q, 'elbow', x, 2.0, 0, 'ua' + q); sl('fa' + q, 'farm', x, 2.0, 0, 'el' + q); sl('hd' + q, 'hand', x, 1.5, 0, 'fa' + q); });
+  [-1, 1].forEach(function (s, k) { var q = k ? 'R' : 'L', x = s * 0.28;
+    sl('hp' + q, 'hip', x, 1.4, 0, 'torso'); sl('th' + q, 'thigh', x, 1.4, 0, 'hp' + q); sl('kn' + q, 'knee', x, 0.8, 0, 'th' + q); sl('sk' + q, 'shank', x, 0.8, 0, 'kn' + q); sl('ft' + q, 'foot', x, 0.2, 0, 'sk' + q); sl('fs' + q, 'fsr', x, 0.2, 0, 'ft' + q, 1); });
+  };
+  var NESS = 0, NOPT = 0, FRC = 'human', frTabs = [];
+  var FRN = { human: 'بشري', quad: 'رباعي الأرجل', wheel: 'بعجلات', arm: 'ذراع صناعية', drone: 'درون' }, FN = { arm: { neck: 'مفصل المعصم', shoulder: 'مفصل القاعدة', hand: 'أداة الإمساك', uarm: 'الذراع الأولى', farm: 'الذراع الثانية' } }, FB = { hip: 1, knee: 1, thigh: 1, shank: 1, foot: 1, fsr: 1, wheel: 1, rotor: 1 };
+  function xtra(p, y1, z1, y2, z2, par) { sl('mic', 'mic', 0, y1, z1, par, 1); sl('spk', 'spk', 0, y2, z2, 'torso', 1); sl('led', 'led', 0, y2 + 0.2, z2, 'torso', 1); sl('ant', 'ant', 0, p, -0.2, 'torso', 1); sl('pack', 'pack', 0, p - 0.1, -0.5, 'torso', 1); }
+  SLF.quad = function () {
+    sl('torso', 'qbody', 0, 1.55, 0); sl('bat', 'bat', 0, 1.55, 0.05, 'torso'); sl('reg', 'reg', 0, 1.75, 0.3, 'torso', 1); sl('pump', 'pump', 0, 1.35, -0.3, 'torso', 1); sl('imu', 'imu', 0, 1.75, 0.15, 'torso', 1);
+    sl('neck', 'neck', 0, 1.75, 0.85, 'torso'); sl('head', 'head', 0, 1.95, 1.25, 'neck'); sl('ctl', 'ctl', 0, 1.95, 1.15, 'head'); sl('cam', 'cam', 0, 1.98, 1.62, 'head', 1); sl('rng', 'rng', 0, 2.33, 1.25, 'head', 1); xtra(2.4, 1.7, 1.58, 1.6, 0.88, 'head');
+    [-1, 1].forEach(function (x) { [-1, 1].forEach(function (z) { var q = (x < 0 ? 'L' : 'R') + (z > 0 ? 'F' : 'B'), X = x * 0.3, Z = z * 0.6;
+      sl('hp' + q, 'hip', X, 1.4, Z, 'torso'); sl('th' + q, 'thigh', X, 1.4, Z, 'hp' + q); sl('kn' + q, 'knee', X, 0.8, Z, 'th' + q); sl('sk' + q, 'shank', X, 0.8, Z, 'kn' + q); sl('ft' + q, 'foot', X, 0.2, Z, 'sk' + q); sl('fs' + q, 'fsr', X, 0.2, Z, 'ft' + q, 1); }); });
+  };
+  SLF.wheel = function () {
+    sl('torso', 'chassis', 0, 0.6, 0); sl('bat', 'bat', 0, 0.85, -0.2, 'torso'); sl('ctl', 'ctl', 0, 0.95, 0.4, 'torso'); sl('reg', 'reg', 0, 0.8, 0.1, 'torso', 1); sl('imu', 'imu', 0, 0.75, 0.6, 'torso', 1); sl('pump', 'pump', 0, 0.9, -0.5, 'torso', 1);
+    sl('cam', 'cam', 0, 0.9, 0.98, 'torso', 1); sl('rng', 'rng', 0, 0.62, 1.0, 'torso', 1); sl('neck', 'neck', 0, 0.85, -0.7, 'torso', 1); sl('head', 'head', 0, 1.35, -0.7, 'neck', 1); xtra(1.0, 0.8, 0.85, 0.85, 0.9, 'torso');
+    [-1, 1].forEach(function (x) { [-1, 1].forEach(function (z) { sl('wh' + (x < 0 ? 'L' : 'R') + (z > 0 ? 'F' : 'B'), 'wheel', x * 0.95, 0.4, z * 0.75, 'torso'); }); });
+  };
+  SLF.arm = function () {
+    sl('torso', 'base', 0, 3.2, 0); sl('bat', 'bat', 0, 3.3, 0.3, 'torso'); sl('ctl', 'ctl', 0, 3.3, -0.3, 'torso'); sl('reg', 'reg', 0, 3.3, 0.55, 'torso', 1); sl('pump', 'pump', 0, 3.3, -0.55, 'torso', 1); sl('imu', 'imu', 0, 3.3, 0, 'torso', 1);
+    sl('shR', 'shoulder', 0, 3.05, 0, 'torso'); sl('uaR', 'uarm', 0, 3.05, 0, 'shR'); sl('elR', 'elbow', 0, 2.5, 0, 'uaR'); sl('faR', 'farm', 0, 2.5, 0, 'elR'); sl('neck', 'neck', 0, 2.0, 0, 'faR'); sl('hdR', 'hand', 0, 2.0, 0, 'neck');
+    sl('cam', 'cam', 0, 1.9, 0.1, 'hdR', 1); sl('rng', 'rng', 0, 1.9, -0.1, 'hdR', 1); xtra(3.4, 3.1, 0.3, 3.1, -0.3, 'torso');
+  };
+  SLF.drone = function () {
+    sl('torso', 'dbody', 0, 1.5, 0); sl('bat', 'bat', 0, 1.38, 0, 'torso'); sl('ctl', 'ctl', 0, 1.62, 0.05, 'torso'); sl('imu', 'imu', 0, 1.55, -0.15, 'torso', 1); sl('reg', 'reg', 0, 1.58, 0.2, 'torso', 1);
+    sl('cam', 'cam', 0, 1.45, 0.5, 'torso', 1); sl('rng', 'rng', 0, 1.45, -0.5, 'torso', 1); xtra(1.8, 1.55, 0.4, 1.4, 0.3, 'torso');
+    [-1, 1].forEach(function (x) { [-1, 1].forEach(function (z) { sl('rt' + (x < 0 ? 'L' : 'R') + (z > 0 ? 'F' : 'B'), 'rotor', x * 0.78, 1.58, z * 0.78, 'torso'); }); });
+  };
+  function buildFrame(f) {
+    FRC = f; SL.length = 0; Object.keys(S).forEach(function (k) { delete S[k]; }); SLF[f]();
+    NESS = SL.filter(function (s) { return !s.opt; }).length; NOPT = SL.length - NESS;
+    SL.forEach(function (s) { var r = (s.pos.x < 0 ? 1 : -1) * (s.pos.z < 0 ? -1 : 1); if (s.type === 'hip') s.g = r; else if (s.type === 'shoulder' || s.type === 'knee') s.g = -r; });
+  }
+  buildFrame('human');
+  var SN = { torso: 'الجذع', head: 'الرأس', neck: 'مفصل الرقبة', shoulder: 'مفصل الكتف', elbow: 'مفصل المرفق', hip: 'مفصل الورك', knee: 'مفصل الركبة', uarm: 'العضد', farm: 'الساعد', hand: 'اليد', thigh: 'الفخذ', shank: 'الساق', foot: 'القدم', bat: 'البطارية', reg: 'منظّم الجهد', pump: 'المضخة الهيدروليكية', ctl: 'المتحكم (داخل الرأس)', imu: 'مستشعر الميل IMU', cam: 'الكاميرا', rng: 'مستشعر المسافة', fsr: 'مستشعر ضغط القدم', qbody: 'جسم الحيوان', chassis: 'الشاسيه', dbody: 'جسم الدرون', base: 'القاعدة المعلّقة', wheel: 'العجلة', rotor: 'محرك المروحة', mic: 'الميكروفون', ant: 'الهوائي', spk: 'مكبّر الصوت', led: 'إضاءة الصدر', pack: 'حقيبة الظهر' };
+  var FEM = { hand: 1, shank: 1, foot: 1, wheel: 1, rotor: 1 };
+  function nm(s) { var n = (FN[FRC] && FN[FRC][s.type]) || SN[s.type], f = FEM[s.type], fb = FB[s.type] && FRC !== 'human' && s.pos.z !== 0 ? (s.pos.z > 0 ? (f ? ' الأمامية' : ' الأمامي') : (f ? ' الخلفية' : ' الخلفي')) : ''; if (s.pos.x === 0) return n + fb; return n + ' ' + (s.pos.x < 0 ? (f ? 'اليمنى' : 'الأيمن') : (f ? 'اليسرى' : 'الأيسر')) + fb; }
+
+  // ===== الحالة =====
+  var root = new T.Group(); scene.add(root);
+  var inst = {}, instV = {}, res = {}, stack = [], flights = [], ghosts = {}, running = false, rt = 0, demoT = null, dragT = null;
+  var ghostMat = new T.MeshBasicMaterial({ color: 0x35d0ff, transparent: true, opacity: 0.3, depthWrite: false });
+  function mkGhosts() { Object.keys(ghosts).forEach(function (k) { root.remove(ghosts[k]); delete ghosts[k]; }); SL.forEach(function (s) { var g = B[s.type](); g.traverse(function (c) { if (c.isMesh) c.material = ghostMat; }); g.position.copy(s.pos); g.visible = false; root.add(g); ghosts[s.id] = g; }); }
+  mkGhosts();
+  function setFrame(f) { if (f === FRC) return; clearAll(); buildFrame(f); mkGhosts(); frTabs.forEach(function (t) { t.el.className = 'it' + (t.k === f ? ' on' : ''); }); updateUI(); toast('تم اختيار الهيكل: ' + FRN[f]); }
+  function shadows(o) { o.traverse(function (c) { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); }
+  function ready(s) { return !res[s.id] && (!s.parent || !!inst[s.parent]); }
+  function nextSlot() { var i; for (i = 0; i < SL.length; i++) if (!res[SL[i].id] && !SL[i].opt) return SL[i]; for (i = 0; i < SL.length; i++) if (!res[SL[i].id]) return SL[i]; return null; }
+  var wv = new T.Vector3();
+  function pick(o, cx, cy) {
+    var c = [], first = null;
+    SL.forEach(function (s) { if (o.st.indexOf(s.type) < 0) return; if (ready(s)) c.push(s); else if (!first && !res[s.id]) first = s; });
+    if (!c.length) return first ? { msg: 'لا يمكن تركيب «' + o.n + '» الآن. ركّب أولاً: ' + nm(S[first.parent]) } : { msg: 'كل أماكن «' + o.n + '» مشغولة بالفعل ✓' };
+    if (cx === undefined) return { slot: c[0] };
+    var r = canvas.getBoundingClientRect(), best = c[0], bd = 1e9;
+    c.forEach(function (s) { wv.copy(s.pos).project(camera); var d = Math.hypot((wv.x + 1) / 2 * r.width + r.left - cx, (1 - wv.y) / 2 * r.height + r.top - cy); if (d < bd) { bd = d; best = s; } });
+    return { slot: best };
+  }
+
+  // ===== الفحص الكهربائي =====
+  function chk() {
+    var bad = [], soft = [], b = null, rg = null, ct = null, pm = null, hy = 0, jn = [], cams = [], id, o;
+    for (id in instV) { o = instV[id]; if (o.cat === 'b') b = o; else if (o.cat === 'g') rg = o; else if (o.cat === 'c') ct = o; else if (o.cat === 'h') pm = o; else if (o.cat === 'k') cams.push(o); else if (o.cat === 'j') { jn.push(o); if (o.x.h) hy++; } }
+    if (!b) { if (jn.length || ct) bad.push('لا توجد بطارية: الروبوت بلا مصدر طاقة.'); return { bad: bad, soft: soft }; }
+    var V = b.x.V;
+    if (rg) { if (b.x.V <= rg.x.out) bad.push('جهد البطارية (' + b.x.V + 'V) أقل من خرج المنظّم (' + rg.x.out + 'V).'); else V = rg.x.out; }
+    if (ct && (V < ct.x.a || V > ct.x.b)) bad.push('المتحكم ' + ct.n + ' يعمل بين ' + ct.x.a + ' و' + ct.x.b + 'V، وجهدك ' + V + 'V. ' + (V > ct.x.b ? 'أضف منظّم جهد مناسباً.' : 'ارفع الجهد.'));
+    var seen = {};
+    jn.forEach(function (j) { if (j.x.h || seen[j.id]) return; seen[j.id] = 1; if (V > j.x.b) bad.push(j.n + ' يتحمل حتى ' + j.x.b + 'V وجهدك ' + V + 'V: سيحترق! أضف منظّماً.'); else if (V < j.x.a) bad.push(j.n + ' يحتاج ' + j.x.a + 'V على الأقل وجهدك ' + V + 'V.'); });
+    if (hy && !pm) bad.push('المشغّل الهيدروليكي يحتاج مضخة هيدروليكية.');
+    if (pm && V !== undefined && (b.x.V < pm.x.a || b.x.V > pm.x.b) && !(rg && rg.x.out >= pm.x.a && rg.x.out <= pm.x.b)) bad.push('المضخة تعمل بين ' + pm.x.a + ' و' + pm.x.b + 'V، وجهد البطارية ' + b.x.V + 'V.');
+    if (pm && !hy) soft.push('المضخة بلا مشغّل هيدروليكي: غير مستعملة.');
+    cams.forEach(function (c) { if (ct && c.x.l > ct.x.l) soft.push('المتحكم ' + ct.n + ' أضعف من معالجة ' + c.n + ' (يلزم معالج أقوى).'); });
+    return { bad: bad, soft: soft };
+  }
+
+  // ===== الصوت =====
+  var ac = null;
+  function beep(f) { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); var o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f; g.gain.value = 0.08; o.connect(g); g.connect(ac.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.15); o.stop(ac.currentTime + 0.16); } catch (e) {} }
+
+  // ===== إلقاء القطعة وتركيبها =====
+  function drop(o, x, z, cx, cy) {
+    if (running) { toast('أوقف التشغيل أولاً'); return false; }
+    var r = pick(o, cx, cy), g = B[(r.slot ? r.slot.type : o.st[0])](o); shadows(g);
+    g.position.set(x, 0.5, z); g.rotation.y = Math.random() * 6; root.add(g);
+    if (!r.slot) { flights.push({ o: g, rej: 0 }); toast(r.msg); beep(150); return false; }
+    res[r.slot.id] = 1; flights.push({ o: g, t: 0, s: r.slot, v: o, from: g.position.clone(), r0: g.rotation.y }); updateUI(); return true;
+  }
+  function land(f) {
+    var s = f.s, g = f.o, par = s.parent ? inst[s.parent] : root, pp = s.parent ? S[s.parent].pos : new T.Vector3();
+    root.remove(g); par.add(g); g.position.copy(s.pos).sub(pp); g.rotation.set(0, 0, 0); g.scale.set(1, 1, 1);
+    inst[s.id] = g; instV[s.id] = f.v; stack.push(s.id); beep(520 + stack.length * 14);
+    toast('✔ ' + nm(s) + ' ← ' + f.v.n + ': ' + f.v.d);
+    updateUI();
+    if (!nextSlot() || stack.filter(function (i) { return !S[i].opt; }).length === NESS) { var w = chk(); if (stack.filter(function (i) { return !S[i].opt; }).length === NESS) toast(w.bad.length ? '⚠️ اكتمل الهيكل لكن لن يعمل: ' + w.bad[0] : '🎉 اكتمل الروبوت! اضغط «تشغيل»'); }
+  }
+  function removeId(id) { var g = inst[id]; g.parent.remove(g); delete inst[id]; delete instV[id]; delete res[id]; }
+  function undo() {
+    if (running) stopRun();
+    if (flights.some(function (f) { return f.s; })) { toast('انتظر حتى تستقر القطعة'); return; }
+    var id = stack.pop(); if (!id) { toast('لا توجد قطع لإزالتها'); return; }
+    removeId(id); beep(260); updateUI();
+  }
+  function clearAll() { stopDemo(); stopRun(); flights.forEach(function (f) { root.remove(f.o); }); flights = []; while (stack.length) removeId(stack.pop()); res = {}; updateUI(); }
+  function rndSpot() { var a = Math.random() * 6.283, r = 2.6 + Math.random() * 1.6; return [Math.sin(a) * r, Math.cos(a) * r]; }
+  var DM = { bat: 'lp2', reg: 'b6', neck: 'mg996', shoulder: 'mg996', elbow: 'mg996', hip: 'mg996', knee: 'mg996', ctl: 'esp32', head: 'hreal', hand: 'hfive', cam: 'ecam', imu: 'mpu', rng: 'hcs', fsr: 'fsr' };
+  function stopDemo() { if (demoT) { clearInterval(demoT); demoT = null; $('bDemo').textContent = '👀 شاهد التركيب'; } }
+  $('bDemo').addEventListener('click', function () {
+    if (demoT) { stopDemo(); return; } if (running) { toast('أوقف التشغيل أولاً'); return; }
+    setMode('demo'); $('bDemo').textContent = '⏹ إيقاف العرض';
+    demoT = setInterval(function () {
+      var s = null, i; for (i = 0; i < SL.length; i++) if (!res[SL[i].id] && SL[i].type !== 'pump') { s = SL[i]; break; }
+      if (!s) { stopDemo(); return; }
+      if (!ready(s)) return; var p = rndSpot(); drop(VID[DM[s.type]] || defV(s.type), p[0], p[1]);
+    }, 1000);
+  });
+  $('bUndo').addEventListener('click', undo); $('bClear').addEventListener('click', clearAll);
+
+  // ===== التشغيل =====
+  var PIV = ['shL', 'shR', 'hpL', 'hpR', 'neck', 'elL', 'elR', 'knL', 'knR'];
+  function essDone() { return stack.filter(function (i) { return !S[i].opt; }).length === NESS; }
+  // ===== المبرمج والمحاكي الفيزيائي =====
+  var CMD = { walk: 1, fly: 1, land: 1, turn: 1, wave: 1, talk: 1, say: 1, look: 1, nod: 1, led: 1, stop: 1, delay: 1, sleep: 1, listen: 1 };
+  var OKF = /^(if|for|while|switch|return|catch|elif|print|println|range|len|int|float|str|min|max|abs|random|pinMode|digitalWrite|digitalRead|analogRead|analogWrite|millis|setup|loop|main|sizeof|Serial|begin|import|from)$/;
+  var COL = { red: 0xff3030, green: 0x2ecc71, blue: 0x3b6fd4, white: 0xffffff, yellow: 0xf4d03f, purple: 0xaa66ff, cyan: 0x35d0ff, orange: 0xff9f1c, 'أحمر': 0xff3030, 'أخضر': 0x2ecc71, 'أزرق': 0x3b6fd4, 'أبيض': 0xffffff, 'أصفر': 0xf4d03f };
+  var SAMPLE = ['void setup() {', '  led("green");', '  talk("مرحبا، أنا روبوت");', '}', '', 'void loop() {', '  walk(4);', '  turn(90);', '  wave();', '  nod();', '  delay(500);', '}'].join('\n');
+  var prog = null, heading = 0, walkT = 0, fall = null, codeOK = false;
+  function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function lev(a, b) { var d = [], i, j; for (i = 0; i <= a.length; i++) d[i] = [i]; for (j = 1; j <= b.length; j++) d[0][j] = j; for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; }
+  // المترجم: يفحص الأقواس والنصوص والدوال ويستخرج الأوامر بالترتيب
+  function compile(src) {
+    var errs = [], acts = [], out = '', st = [], i, c, ln = 1, q = null, P = { ')': '(', ']': '[', '}': '{' };
+    for (i = 0; i < src.length; i++) {
+      c = src[i];
+      if (q) { if (c === q) q = null; else if (c === '\n') { errs.push('نص غير مغلق (علامة اقتباس ناقصة) في السطر ' + ln); q = null; } }
+      else if (c === '"' || c === "'") q = c;
+      else if ((c === '/' && src[i + 1] === '/') || c === '#') { while (i < src.length && src[i] !== '\n') i++; i--; continue; }
+      else if (c === '/' && src[i + 1] === '*') { i += 2; while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) { if (src[i] === '\n') { out += '\n'; ln++; } i++; } i++; continue; }
+      else if ('([{'.indexOf(c) >= 0) st.push([c, ln]);
+      else if (')]}'.indexOf(c) >= 0) { var tp = st.pop(); if (!tp || tp[0] !== P[c]) errs.push('القوس «' + c + '» غير متطابق في السطر ' + ln); }
+      out += c; if (c === '\n') ln++;
+    }
+    if (q) errs.push('نص غير مغلق في نهاية الكود');
+    st.forEach(function (t) { errs.push('القوس «' + t[0] + '» الذي فُتح في السطر ' + t[1] + ' لم يُغلق'); });
+    var decl = {}, cs = /\bvoid\s+\w+\s*\(/.test(out), m, re = /\b(?:void|int|float|bool|def|function)\s+(\w+)\s*\(/g;
+    while ((m = re.exec(out))) decl[m[1]] = 1;
+    out.split('\n').forEach(function (L, k) {
+      var n = k + 1, r = /([A-Za-z_]\w*)\s*\(([^)]*)\)?/g, mm, t = L.trim();
+      while ((mm = r.exec(L))) {
+        var f = mm[1], a = mm[2].trim(), num = parseFloat(a);
+        if (/\.\s*$/.test(L.slice(0, mm.index)) || OKF.test(f) || (decl[f] && !CMD[f])) continue;
+        if (!CMD[f]) { var best = '', bd = 9, cn, dd; for (cn in CMD) { dd = lev(f.toLowerCase(), cn); if (dd < bd) { bd = dd; best = cn; } } errs.push('دالة غير معروفة «' + f + '» في السطر ' + n + (bd <= 2 ? '، هل تقصد «' + best + '»؟' : '')); continue; }
+        if (f === 'walk' && a && !(num > 0 && num <= 30)) errs.push('walk تحتاج عدد خطوات بين 1 و30 (السطر ' + n + ')');
+        else if (f === 'fly' && a && !(num > 0 && num <= 30)) errs.push('fly تحتاج مدة بين 1 و30 ثانية (السطر ' + n + ')');
+        else if (f === 'turn' && !(a && Math.abs(num) <= 360)) errs.push('turn تحتاج زاوية بين -360 و360 (السطر ' + n + ')');
+        else if ((f === 'talk' || f === 'say') && !/^["'][^"']+["']$/.test(a)) errs.push('talk تحتاج نصاً بين علامتي اقتباس (السطر ' + n + ')');
+        else if ((f === 'delay' || f === 'sleep') && !(num >= 0)) errs.push(f + ' تحتاج رقماً (السطر ' + n + ')');
+        else if (f === 'led' && !a) errs.push('led تحتاج لوناً مثل "red" (السطر ' + n + ')');
+        else if (cs && !/[;{}]$/.test(t)) errs.push('ينقص ; في نهاية السطر ' + n);
+        acts.push({ c: f === 'say' ? 'talk' : f, a: a, n: n });
+      }
+    });
+    if (/\bsetup\s*\(/.test(out) && !/\bloop\s*\(/.test(out)) errs.push('البرنامج يحتاج دالة loop()');
+    if (!acts.length && !errs.length) errs.push('لا يوجد أي أمر للروبوت (جرّب walk(4) أو talk("مرحبا"))');
+    return { errs: errs, acts: acts };
+  }
+  // الفيزياء: كتل وعزوم ومركز ثقل وقاعدة ارتكاز
+  function massOf(id) {
+    var o = instV[id], x = o.x, t = S[id].type, c = o.cat;
+    if (c === 'j') return x.h ? 1 : 30 * x.r * x.r; if (c === 'c') return 0.05 + x.w * 0.5; if (c === 'b') return x.w * x.h * x.d * 12;
+    if (c === 'h') return 0.5; if (c === 'g' || c === 'k') return 0.05; if (c === 'n') return 0.02;
+    if (c === 'x') return t === 'pack' ? 0.3 + x.w * x.h * 1.5 : t === 'spk' ? x.r * 3 : 0.05;
+    return ({ torso: 1.2 * (x.w || 1), uarm: 0.4 * (x.r || 0.09) / 0.09, farm: 0.3 * (x.r || 0.08) / 0.08, thigh: 0.8 * (x.w || 0.22) / 0.22, shank: 0.6 * (x.w || 0.2) / 0.2, foot: 0.3 * (x.w || 0.3) * (x.l || 0.55) / 0.165, head: 0.5, hand: 0.15, qbody: 1.6 * (x.w || 0.8) / 0.8, chassis: 1.5 * (x.w || 1.7) / 1.7, dbody: 0.6 * (x.w || 0.8) / 0.8, base: 2 * (x.w || 1.2) / 1.2 })[t] || 0.1;
+  }
+  function below(id) { var m = 0; stack.forEach(function (i) { var p = S[i].parent; while (p) { if (p === id) { m += massOf(i); break; } p = S[p].parent; } }); return m; }
+  function phys() {
+    var M = 0, cx = 0, cz = 0, rows = [], x0 = 9, x1 = -9, z0 = 9, z1 = -9;
+    stack.forEach(function (id) { var m = massOf(id); M += m; cx += m * S[id].pos.x; cz += m * S[id].pos.z; }); cx /= M; cz /= M;
+    var T = 0;
+    stack.forEach(function (id) { var o = instV[id], t = S[id].type, w, l, p = S[id].pos, of = t === 'foot' ? 0.1 : 0; if (t === 'rotor') T += 300 * o.x.r * o.x.r; if (t !== 'foot' && t !== 'wheel') return; w = t === 'wheel' ? 0.1 : (o.x.w || 0.3); l = t === 'wheel' ? 0.3 : (o.x.l || 0.55); x0 = Math.min(x0, p.x - w / 2); x1 = Math.max(x1, p.x + w / 2); z0 = Math.min(z0, p.z + of - l / 2); z1 = Math.max(z1, p.z + of + l / 2); });
+    stack.forEach(function (id) {
+      var t = S[id].type, o = instV[id]; if (t === 'wheel') rows.push({ n: nm(S[id]), need: M * 0.04, have: 1800 * Math.pow(o.x.r, 3) }); if (JT.indexOf(t) < 0) return;
+      rows.push({ n: nm(S[id]), need: (t === 'hip' || t === 'knee') ? M * (FRC === 'quad' ? 0.08 : 0.12) : below(id) * (t === 'shoulder' ? 0.9 : t === 'elbow' ? 0.5 : 0.4), have: o.x.h ? 8 : 1800 * Math.pow(o.x.r, 3) });
+    });
+    var mx = Math.min(cx - x0, x1 - cx), mz = Math.min(cz - z0, z1 - cz); if (FRC === 'arm') mx = mz = 1; else if (FRC === 'drone') { mx = 0.3 - Math.abs(cx); mz = 0.3 - Math.abs(cz); }
+    return { M: M, cx: cx, cz: cz, mx: mx, mz: mz, lift: T / M, rows: rows };
+  }
+  function has(t) { for (var k in instV) if (S[k].type === t) return instV[k]; return null; }
+  function analyze() {
+    var c = compile($('code').value), e = c.errs.slice(), w = [], u = {}, cc = chk(), ct = has('ctl'), ph = null;
+    c.acts.forEach(function (a) { u[a.c] = 1; });
+    if (!essDone()) e.push('التركيب غير مكتمل: ' + stack.filter(function (i) { return !S[i].opt; }).length + '/' + NESS + ' من الأماكن الأساسية');
+    cc.bad.forEach(function (t) { e.push(t); }); cc.soft.forEach(function (t) { w.push(t); });
+    if (u.talk && !has('spk')) e.push('talk تحتاج «مكبّر الصوت»: ركّبه من لائحة 🎛️');
+    if (u.listen && !has('mic')) e.push('listen تحتاج «ميكروفون»: ركّبه من لائحة 🎛️');
+    if ((u.talk || u.listen) && ct && ct.x.l < 2) e.push('المتحكم ' + ct.n + ' أضعف من أن يعالج الكلام (يلزم ESP32 أو أقوى)');
+    if (u.led && !has('led')) e.push('led تحتاج «إضاءة الصدر»: ركّبها من لائحة 🎛️');
+    if (u.look) { var cm = has('cam'); if (!cm) e.push('look تحتاج كاميرا'); else if (ct && cm.x.l > ct.x.l) e.push('المتحكم ' + ct.n + ' أضعف من معالجة ' + cm.n); }
+    if (u.walk && (FRC === 'arm' || FRC === 'drone')) e.push('هذا الهيكل لا يمشي: ' + (FRC === 'drone' ? 'استعمل fly() و land()' : 'استعمل turn() و wave()'));
+    if ((u.fly || u.land) && FRC !== 'drone') e.push('fly و land خاصتان بالدرون');
+    if (u.fly && !has('imu')) e.push('الدرون يحتاج مستشعر IMU لتثبيت الطيران');
+    if (u.wave && !has('shoulder')) e.push('wave تحتاج ذراعاً');
+    if ((u.nod || u.look) && !has('neck')) e.push('nod و look تحتاج مفصل رقبة');
+    if ((FRC === 'human' || FRC === 'quad') && (u.walk || u.turn) && !has('imu')) w.push('لا يوجد IMU: سيفقد توازنه أثناء المشي');
+    if (essDone()) { ph = phys(); if (ph.mx < 0 || ph.mz < 0) w.push('مركز الثقل خارج قاعدة القدمين: سيسقط'); ph.rows.forEach(function (r) { if (r.have < r.need) w.push(r.n + ': العزم ' + r.have.toFixed(2) + ' أقل من المطلوب ' + r.need.toFixed(2) + ' N·m'); }); }
+    return { e: e, w: w, acts: c.acts, ph: ph };
+  }
+  function showLog(r) {
+    var h = r.e.map(function (t) { return '<div class="le">❌ ' + esc(t) + '</div>'; }).concat(r.w.map(function (t) { return '<div class="lw">⚠️ ' + esc(t) + '</div>'; })).join('');
+    if (!r.e.length) h = '<div class="lo">✅ الكود سليم والتركيب جاهز (' + r.acts.length + ' أمراً)' + (r.w.length ? ' لكن هناك تحذيرات فيزيائية' : '') + '</div>' + h;
+    if (r.ph) h += '<div class="l1">⚖️ الكتلة ' + r.ph.M.toFixed(1) + ' كغ · هامش الاتزان ' + (Math.min(r.ph.mx, r.ph.mz) * 30).toFixed(0) + 'سم<br>🔧 ' + r.ph.rows.map(function (x) { return esc(x.n) + ' ' + x.have.toFixed(1) + '/' + x.need.toFixed(1) + (x.have >= x.need ? '✔' : '✖'); }).join(' · ') + '</div>';
+    $('log').innerHTML = h; codeOK = !r.e.length; $('tCode').textContent = '💻 البرمجة' + (codeOK ? ' ✓' : ' ✗');
+  }
+  function setPage(p) { $('app').classList.toggle('cp', p === 'code'); $('tCode').classList.toggle('on', p === 'code'); $('tBuild').classList.toggle('on', p !== 'code'); closeDr(); }
+  $('tBuild').addEventListener('click', function () { setPage('build'); }); $('tCode').addEventListener('click', function () { setPage('code'); });
+  $('cEx').addEventListener('click', function () { $('code').value = SAMPLE; showLog(analyze()); });
+  $('cChk').addEventListener('click', function () { showLog(analyze()); });
+  $('cRun').addEventListener('click', function () { var r = analyze(); showLog(r); if (r.e.length) return; if (running) stopRun(); setPage('build'); startRun(); });
+  $('fIn').addEventListener('change', function () { var f = this.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { $('code').value = String(rd.result); showLog(analyze()); }; rd.readAsText(f); this.value = ''; });
+  // المحاكي
+  function pose0() { PIV.forEach(function (k) { if (inst[k]) inst[k].rotation.set(0, 0, 0); }); if (inst.head) inst.head.scale.set(1, 1, 1); if (inst.spk) inst.spk.scale.set(1, 1, 1); if (FRC !== 'drone') root.position.y = 0; }
+  function steer(dt) { if (Math.hypot(root.position.x, root.position.z) > 4.6) { var tg = Math.atan2(-root.position.x, -root.position.z); heading += Math.atan2(Math.sin(tg - heading), Math.cos(tg - heading)) * Math.min(1, dt * 3); } }
+  function legs(w, dt) { stack.forEach(function (id) { var q = S[id], o = inst[id], t = q.type; if (t === 'wheel') o.rotation.x += dt * 4; else if (q.g) { if (t === 'knee') o.rotation.x = Math.max(0, q.g * w) * 1.1; else if (t === 'hip' || t === 'shoulder') o.rotation.x = q.g * w; } }); }
+  function startRun() {
+    var r = analyze(); showLog(r);
+    if (r.e.length) { toast('⚠️ لا يعمل: ' + r.e[0]); setPage('code'); return; }
+    stopDemo(); running = true; rt = 0; fall = null; heading = 0; walkT = 0; root.position.set(0, 0, 0); pose0();
+    prog = { a: r.acts, i: 0, cur: null, ph: r.ph, imu: !!inst.imu || FRC === 'wheel' }; $('bRun').textContent = '■ إيقاف'; $('bRun').className = 'on';
+  }
+  function stopRun() { running = false; prog = null; fall = null; try { speechSynthesis.cancel(); } catch (e) {} $('bRun').textContent = '▶ تشغيل الروبوت'; $('bRun').className = ''; root.position.set(0, 0, 0); root.rotation.set(0, 0, 0); pose0(); }
+  $('bRun').addEventListener('click', function () { running ? stopRun() : startRun(); });
+  function doFall(m, ax, sg) { fall = { t: 0, m: m, ax: ax, sg: sg }; try { speechSynthesis.cancel(); } catch (e) {} }
+  function setLed(a) {
+    var s = a.replace(/["'\s]/g, '').toLowerCase(), col = COL[s], p = s.split(','); if (col === undefined && p.length === 3) col = ((p[0] & 255) << 16) | ((p[1] & 255) << 8) | (p[2] & 255); if (col === undefined) col = 0xffffff;
+    inst.led.traverse(function (o) { if (o.isMesh) { o.material.color.setHex(col); o.material.emissive.setHex(col); } });
+  }
+  function begin(a) {
+    var ph = prog.ph, n = parseFloat(a.a), d = 0.5, k = a.c, sk = null, bad = ph.rows.filter(function (r) { return r.have < r.need; }).map(function (r) { return r.n; }).join('|');
+    if (ph.mx < 0 || ph.mz < 0) return doFall('سقط الروبوت: مركز الثقل خارج قاعدة القدمين. وسّع القدمين أو خفّف الحمل.', ph.mz < 0 ? 'x' : 'z', ph.mz < 0 ? (ph.cz < 0 ? -1 : 1) : (ph.cx < 0 ? 1 : -1));
+    if ((k === 'walk' || k === 'turn') && FRC === 'wheel' && /العجل/.test(bad)) sk = 'محركات العجلات أضعف من وزن الروبوت';
+    if (k === 'fly' && ph.lift < 1.3) sk = 'قوة الرفع ' + ph.lift.toFixed(1) + '× الوزن، وتحتاج 1.3× على الأقل: لا يقلع الدرون';
+    if ((k === 'walk' || k === 'turn') && /الورك|الركبة/.test(bad)) return doFall('انهار الروبوت: محركات الورك أو الركبة لا تتحمل وزنه (' + ph.M.toFixed(1) + ' كغ). استعمل محركات أقوى.', 'x', -1);
+    if (k === 'wave' && /الكتف|المرفق/.test(bad)) sk = 'محركات الذراع أضعف من أن ترفعها';
+    if ((k === 'nod' || k === 'look') && /الرقبة/.test(bad)) sk = 'محرك الرقبة أضعف من وزن الرأس';
+    if (k === 'walk') d = (n || 4) * 0.8; else if (k === 'fly') d = n || 3; else if (k === 'land') d = 1.5; else if (k === 'turn') d = Math.abs(n) / 80 + 0.3; else if (k === 'wave') d = 2.4; else if (k === 'talk') d = 1.2 + a.a.length * 0.06; else if (k === 'look') d = 2; else if (k === 'nod') d = 1.2; else if (k === 'delay') d = n / 1000; else if (k === 'sleep') d = n; else if (k === 'listen') d = 1.5;
+    if (sk) { toast('⚠️ ' + sk); d = 0.6; }
+    else if (k === 'talk') { var tx = a.a.replace(/^["']|["']$/g, ''); toast('🗣 ' + tx); try { var u = new SpeechSynthesisUtterance(tx); u.lang = 'ar-SA'; speechSynthesis.speak(u); } catch (e) {} }
+    else if (k === 'led') setLed(a.a); else if (k === 'listen') toast('🎤 يستمع…');
+    prog.cur = { c: k, t: 0, d: Math.max(0.2, d), sk: sk, n: n };
+  }
+  function runAnim(dt) {
+    var c, k, w, f = inst;
+    if (fall) { fall.t += dt; var p = Math.min(1, fall.t / 1.1); root.rotation[fall.ax] = fall.sg * p * p * 1.5; if (p >= 1 && !fall.d) { fall.d = 1; toast(fall.m); beep(120); } return; }
+    if (!prog.cur) { if (prog.i >= prog.a.length) prog.i = 0; pose0(); begin(prog.a[prog.i]); if (fall) return; }
+    c = prog.cur; k = c.c; c.t += dt; rt += dt; w = Math.sin(rt * 7) * 0.6;
+    if (k === 'walk' && !c.sk) {
+      if (!prog.imu && (walkT += dt) > 2.4) return doFall('فقد الروبوت توازنه أثناء المشي: ركّب مستشعر IMU للحفاظ على التوازن.', 'x', 1);
+      steer(dt);
+      root.position.x += Math.sin(heading) * dt * 0.9; root.position.z += Math.cos(heading) * dt * 0.9; if (FRC !== 'wheel') root.position.y = Math.abs(Math.sin(rt * 7)) * 0.05;
+      legs(w, dt);
+    } else if (k === 'turn' && !c.sk) { heading += c.n * Math.PI / 180 * dt / c.d; if (FRC !== 'arm') legs(w * 0.5, dt); }
+    else if ((k === 'fly' || k === 'land') && !c.sk) { steer(dt); if (k === 'fly') { root.position.y = Math.min(1.3, root.position.y + dt * 1.2); if (root.position.y > 0.8) { root.position.x += Math.sin(heading) * dt * 0.6; root.position.z += Math.cos(heading) * dt * 0.6; } } else root.position.y = Math.max(0, root.position.y - dt * 0.9); stack.forEach(function (id) { if (S[id].type === 'rotor') inst[id].children[1].rotation.y += dt * 45; }); }
+    else if (k === 'wave' && !c.sk) { f.shR.rotation.z = 2.3; f.elR.rotation.z = Math.sin(rt * 10) * 0.5; }
+    else if (k === 'talk' && !c.sk) { (f.head || f.torso).scale.setScalar(1 + Math.abs(Math.sin(rt * 14)) * 0.04); if (f.spk) f.spk.scale.setScalar(1 + Math.abs(Math.sin(rt * 14)) * 0.3); }
+    else if (k === 'look' && !c.sk) f.neck.rotation.y = Math.sin(rt * 2.5) * 0.7;
+    else if (k === 'nod' && !c.sk) f.neck.rotation.x = Math.sin(rt * 6) * 0.35;
+    (FRC === 'arm' ? f.shR : root).rotation.y = heading; if (c.t >= c.d) { prog.i++; prog.cur = null; }
+  }
+
+  // ===== اللوائح الجانبية =====
+  var items = [];
+  function mkItem(o, parent) {
+    var d = document.createElement('div'); d.className = 'it'; d.innerHTML = '<div class="ic">' + o.i + '</div><div><b>' + o.n + '</b><small>' + o.d + '</small><em>' + o.s + '</em></div>';
+    d.addEventListener('pointerdown', function (e) { dragT = { o: o, x: e.clientX, y: e.clientY, mv: false }; showGhosts(o); });
+    parent.appendChild(d); items.push({ el: d, o: o, g: parent.parentNode });
+  }
+  function mkGroup(title, cat, host, open) {
+    var g = document.createElement('div'); g.className = 'gp' + (open ? ' open' : ''); var b = document.createElement('button'); b.textContent = title; var li = document.createElement('div'); li.className = 'li';
+    b.addEventListener('click', function () { g.classList.toggle('open'); }); g.appendChild(b); g.appendChild(li); host.appendChild(g);
+    VS.forEach(function (o) { if (o.cat === cat) mkItem(o, li); });
+  }
+  [['⚙️ المفاصل والمشغّلات', 'j', 1], ['🧠 المتحكمات (داخل الرأس)', 'c'], ['🔋 البطاريات بجهود مختلفة', 'b'], ['🔌 منظّمات الجهد', 'g'], ['💧 المضخات الهيدروليكية', 'h'], ['📷 الكاميرات', 'k'], ['📡 المستشعرات', 'n'], ['🎛️ صوت وإضاءة واتصال وحمل', 'x']].forEach(function (a) { mkGroup(a[0], a[1], $('dlb'), a[2]); });
+  var FR = [['ألمنيوم', 'إطار ألمنيوم خفيف ومتين', 0x9aa6b5, 0.7, 0.35, 0.55], ['ألياف كربون', 'أخف وزناً وأقوى لكن أغلى', 0x1d1f24, 0.3, 0.45, 0.75], ['مطبوع PLA', 'سهل الطباعة ثلاثية الأبعاد وزهيد', 0xf2f2ec, 0, 0.7, 0.65], ['فولاذ صناعي', 'متين جداً وثقيل للروبوتات الكبيرة', 0x5b6470, 0.8, 0.3, 0.85], ['أكريليك شفاف', 'يكشف الأجزاء الداخلية للتعلّم', 0x7fd8ff, 0.1, 0.1, 0.3], ['تيتانيوم', 'قوي وخفيف ومقاوم للصدأ', 0xb8bcc4, 0.9, 0.25, 0.8], ['نحاس', 'موصل جيد للحرارة والكهرباء', 0xc87533, 0.9, 0.3, 0.8], ['خشب', 'سهل القص ومناسب للنماذج التعليمية', 0x9c6b3c, 0, 0.8, 0.9], ['سيليكون مرن', 'ناعم يمتص الصدمات', 0x3a3a3a, 0, 0.9, 0.9], ['ألمنيوم أزرق', 'ألمنيوم مؤكسد بلون أزرق', 0x2f6fd0, 0.7, 0.35, 0.6], ['ذهبي', 'مظهر فاخر للعرض', 0xd4af37, 0.9, 0.3, 0.85], ['ألياف زجاج', 'متين وعازل للكهرباء', 0xd8e2dc, 0.1, 0.5, 0.7], ['أسود مطفي', 'مظهر عسكري هادئ', 0x15171a, 0.3, 0.8, 0.9], ['أبيض لؤلؤي', 'مظهر نظيف للروبوتات المنزلية', 0xf5f5f0, 0.2, 0.3, 0.85], ['أخضر نيون', 'مظهر مستقبلي', 0x39ff88, 0.2, 0.3, 0.7], ['وردي نيون', 'مظهر مرح', 0xff4fb8, 0.2, 0.3, 0.7], ['فضي مرآة', 'لامع يعكس الضوء', 0xe8eaf0, 1, 0.1, 0.9]], frEls = [];
+  (function () {
+    var host = $('drb'), g = document.createElement('div'); g.className = 'gp open'; g.innerHTML = '<button>🧍 نوع الهيكل</button><div class="li"></div>'; host.appendChild(g);
+    var li = g.querySelector('.li');
+    [['🧍', 'هيكل بشري', 'human'], ['🐕', 'هيكل رباعي الأرجل', 'quad'], ['🛞', 'هيكل بعجلات', 'wheel'], ['🦾', 'ذراع صناعية معلّقة', 'arm'], ['🚁', 'درون رباعي المراوح', 'drone']].forEach(function (a) {
+      var d = document.createElement('div'); d.className = 'it' + (a[2] === FRC ? ' on' : ''); d.innerHTML = '<div class="ic">' + a[0] + '</div><div><b>' + a[1] + '</b><em>اضغط للاختيار</em></div>'; d.style.touchAction = 'auto';
+      d.addEventListener('click', function () { setFrame(a[2]); }); li.appendChild(d); frTabs.push({ el: d, k: a[2] }); });
+    var g2 = document.createElement('div'); g2.className = 'gp open'; g2.innerHTML = '<button>🎨 خامة الهيكل</button><div class="li"></div>'; host.appendChild(g2); var l2 = g2.querySelector('.li');
+    FR.forEach(function (f, i) {
+      var d = document.createElement('div'); d.className = 'it'; d.innerHTML = '<div class="ic">▣</div><div><b>' + f[0] + '</b><small>' + f[1] + '</small></div>'; d.style.touchAction = 'auto';
+      d.addEventListener('click', function () { FM.color.set(f[2]); FM.metalness = f[3]; FM.roughness = f[4]; FM.opacity = f[5]; frEls.forEach(function (e, k) { e.className = 'it' + (k === i ? ' on' : ''); }); toast('خامة الهيكل: ' + f[0]); });
+      l2.appendChild(d); frEls.push(d);
+    }); frEls[0].className = 'it on';
+    mkGroup('🦴 قطع الجذع والأطراف', 'fs', host, 1); mkGroup('🗿 الرؤوس', 'fh', host); mkGroup('✋ الأيدي', 'fa', host);
+  })();
+  function drawer(id, open) { $(id).classList.toggle('open', open); }
+  // منع انزياح الصفحة مهما حدث
+  // ===== وضع التركيب =====
+  function setMode(m) {
+    $('mode').style.display = 'none';
+    if (m === 'self') { stopDemo(); $('app').classList.add('man'); $('scene').classList.add('man'); updateUI(); openNext(); }
+    else { $('app').classList.remove('man'); $('scene').classList.remove('man'); closeDr(); }
+  }
+  function openNext() {
+    var nx = nextSlot(), it = null; if (!nx) return;
+    items.forEach(function (x) { if (!it && x.o.st.indexOf(nx.type) >= 0) it = x; }); if (!it) return;
+    closeDr(); drawer(B2.indexOf(nx.type) >= 0 ? 'dr' : 'dl', true); it.g.classList.add('open');
+    setTimeout(function () { var db = $(B2.indexOf(nx.type) >= 0 ? 'drb' : 'dlb'), a = it.el.getBoundingClientRect(), b = db.getBoundingClientRect(); db.scrollTop += (a.top - b.top) - (db.clientHeight - a.height) / 2; }, 80);
+  }
+  $('mSelf').addEventListener('click', function () { setMode('self'); });
+  $('mWatch').addEventListener('click', function () { $('bDemo').click(); });
+  $('bSelf').addEventListener('click', function () { if (running) { toast('أوقف التشغيل أولاً'); return; } setMode('self'); });
+  function closeDr() { drawer('dl', false); drawer('dr', false); }
+  $('bL').addEventListener('click', function () { var o = !$('dl').classList.contains('open'); closeDr(); drawer('dl', o); });
+  $('bR').addEventListener('click', function () { var o = !$('dr').classList.contains('open'); closeDr(); drawer('dr', o); });
+  Array.prototype.forEach.call(document.querySelectorAll('.dh button'), function (b) { b.addEventListener('click', closeDr); });
+
+  function showGhosts(o) {
+    var nx = nextSlot();
+    SL.forEach(function (s) { ghosts[s.id].visible = o ? (o.st.indexOf(s.type) >= 0 && ready(s)) : (!!nx && nx.id === s.id && ready(s)); });
+  }
+  function updateUI() {
+    var ne = stack.filter(function (i) { return !S[i].opt; }).length, no = stack.length - ne, nx = nextSlot(), cc = chk();
+    $('pt').textContent = 'الأساسيات ' + ne + '/' + NESS + ' · اختياري ' + no + '/' + NOPT; $('bar').style.width = (ne / NESS * 100) + '%';
+    $('hint').textContent = nx ? (nx.opt ? 'اختياري: ' : 'الخطوة ' + (ne + 1) + ': ') + 'ركّب «' + nm(nx) + '» من قائمة ' + (B2.indexOf(nx.type) >= 0 ? 'الهياكل 🦴' : 'القطع 📦') : '✅ اكتمل التركيب! افتح تبويب 💻 البرمجة لكتابة البرنامج ثم شغّله';
+    var msg = cc.bad.map(function (t) { return '⚠️ ' + t; }).concat(cc.soft.map(function (t) { return 'ℹ️ ' + t; }));
+    $('warn').style.display = msg.length ? 'block' : 'none'; $('warn').innerHTML = msg.join('<br>');
+    $('bRun').style.display = essDone() ? 'block' : 'none';
+    items.forEach(function (it) { it.g._n = 0; }); items.forEach(function (it) { var ok = SL.some(function (q) { return it.o.st.indexOf(q.type) >= 0; }); it.el.style.display = ok ? '' : 'none'; if (ok) it.g._n++; }); items.forEach(function (it) { it.g.style.display = it.g._n ? '' : 'none'; });
+    var nl = false, nr = false;
+    items.forEach(function (it) {
+      var hit = !!nx && it.o.st.indexOf(nx.type) >= 0, inn = false; stack.forEach(function (i) { if (instV[i] === it.o) inn = true; });
+      it.el.className = 'it' + (hit ? ' nx' : '') + (inn ? ' on' : ''); if (hit) { if (B2.indexOf(nx.type) >= 0) nr = true; else nl = true; }
+    });
+    $('bL').className = 'hd' + (nl ? ' nx' : ''); $('bR').className = 'hd' + (nr ? ' nx' : '');
+    if (!dragT) showGhosts(null);
+  }
+  var B2 = ['qbody', 'chassis', 'dbody', 'base', 'torso', 'head', 'uarm', 'farm', 'hand', 'thigh', 'shank', 'foot'];
+
+  // ===== السحب إلى الميدان =====
+  var fly = $('fly'), ray = new T.Raycaster(), ndc = new T.Vector2(), gp = new T.Plane(new T.Vector3(0, 1, 0), 0), hit = new T.Vector3();
+  function groundAt(cx, cy) {
+    var r = canvas.getBoundingClientRect(); ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera); if (!ray.ray.intersectPlane(gp, hit)) return null;
+    var d = Math.hypot(hit.x, hit.z), k = d > 5.5 ? 5.5 / d : 1; return [hit.x * k, hit.z * k];
+  }
+  window.addEventListener('pointermove', function (e) {
+    if (!dragT) return;
+    if (!dragT.mv && Math.hypot(e.clientX - dragT.x, e.clientY - dragT.y) > 10) { dragT.mv = true; fly.textContent = dragT.o.i; fly.style.display = 'block'; closeDr(); }
+    if (dragT.mv) { fly.style.left = e.clientX + 'px'; fly.style.top = (e.clientY - 30) + 'px'; }
+  });
+  function endDrag(e, cancel) {
+    if (!dragT) return; var d = dragT; dragT = null; fly.style.display = 'none';
+    if (!cancel) {
+      var r = canvas.getBoundingClientRect();
+      if (d.mv && e.clientY > r.top && e.clientY < r.bottom && e.clientX > r.left && e.clientX < r.right) { var g = groundAt(e.clientX, e.clientY); if (g) drop(d.o, g[0], g[1], e.clientX, e.clientY); }
+      else if (!d.mv) { var p = rndSpot(); drop(d.o, p[0], p[1]); }
+    }
+    updateUI();
+  }
+  window.addEventListener('pointerup', function (e) { endDrag(e, false); });
+  window.addEventListener('pointercancel', function (e) { endDrag(e, true); });
+
+  // ===== الكاميرا =====
+  var az = 0.5, el = 0.28, zoom = 1, pts = {}, pd = 0, tgt = new T.Vector3(0, 1.8, 0);
+  function pdist() { var k = Object.keys(pts); if (k.length < 2) return 0; return Math.hypot(pts[k[0]].x - pts[k[1]].x, pts[k[0]].y - pts[k[1]].y); }
+  canvas.addEventListener('pointerdown', function (e) { closeDr(); pts[e.pointerId] = { x: e.clientX, y: e.clientY }; try { canvas.setPointerCapture(e.pointerId); } catch (x) {} pd = pdist(); });
+  canvas.addEventListener('pointermove', function (e) {
+    var p = pts[e.pointerId]; if (!p) return; var n = Object.keys(pts).length;
+    if (n === 1) { az -= (e.clientX - p.x) * 0.01; el = Math.max(0.05, Math.min(1.3, el + (e.clientY - p.y) * 0.008)); }
+    p.x = e.clientX; p.y = e.clientY;
+    if (n === 2) { var d = pdist(); if (pd) zoom = Math.max(0.5, Math.min(1.6, zoom * pd / d)); pd = d; }
+  });
+  function upc(e) { delete pts[e.pointerId]; pd = 0; }
+  canvas.addEventListener('pointerup', upc); canvas.addEventListener('pointercancel', upc);
+  canvas.addEventListener('wheel', function (e) { e.preventDefault(); zoom = Math.max(0.5, Math.min(1.6, zoom * (1 + e.deltaY * 0.001))); }, { passive: false });
+
+  // ===== المساعد (الذكاء الاصطناعي) =====
+  var FAQ = [[/هيدروليك|زيت|مضخ/, 'المشغّل الهيدروليكي يتحرك بضغط الزيت الذي تدفعه المضخة، فيعطي قوة هائلة وحركة سلسة لكنه أثقل وأبطأ، ويحتاج مضخة وخزاناً وصمامات.'],
+    [/سيرفو|ستيبر|bldc|محرك/, 'السيرفو يدور لزاوية محددة ويثبت. الستيبر يتحرك بخطوات دقيقة. BLDC قوي وسريع ويحتاج ESC. لكل نوع مجال جهد مسموح، وتجاوزه يحرقه.'],
+    [/جهد|فولت|بطاري|منظ|يحترق|احتراق/, 'اجمع جهد البطارية مع المجال المسموح للمتحكم والمحركات. إن زاد الجهد فاستعمل منظّم Buck، وإن قلّ فاختر بطارية أعلى أو رافع جهد.'],
+    [/متحكم|اردوينو|arduino|esp|raspberry|jetson|برمج/, 'Arduino للتحكم البسيط، ESP32 للاتصال اللاسلكي، Raspberry Pi وJetson للرؤية والذكاء الاصطناعي. اختر المتحكم حسب الكاميرا والحساسات التي ستضيفها.'],
+    [/كامير|رؤي|عمق/, 'كل كاميرا تحتاج معالجاً مناسباً: OV7670 مع Arduino، ESP32-CAM مع ESP32، وكاميرات Pi/USB/العمق مع Raspberry Pi أو Jetson.'],
+    [/توازن|مشي|imu|ميل|ضغط/, 'التوازن يعتمد على مستشعر الميل IMU في الجذع وحساسات ضغط في القدمين، والمتحكم يصحّح زوايا الورك والكاحل لحظياً.']];
+  var PK = { torso: /جذع|صدر/, head: /رأس|راس|وجه/, hand: /يد|اصابع|مخلب|ملقط/, uarm: /عضد/, farm: /ساعد/, thigh: /فخذ/, shank: /ساق|رجل/, foot: /قدم/ };
+  function norm(t) { return String(t).replace(/[\u064B-\u0652\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').toLowerCase(); }
+  function say(t) { $('ans').textContent = '🤖 ' + t; }
+  function localAnswer(q) {
+    var n = norm(q), i, k, o;
+    for (i = 0; i < VS.length; i++) { o = VS[i]; if (n.indexOf(norm(o.n)) >= 0) return o.n + ': ' + o.d + ' (' + o.s + ')'; }
+    for (i = 0; i < FAQ.length; i++) if (FAQ[i][0].test(n)) return FAQ[i][1];
+    for (k in PK) if (PK[k].test(n)) return SN[k] + ': ' + defV(k).d;
+    var cc = chk(); if (cc.bad.length) return cc.bad[0]; var nx = nextSlot(); return nx ? 'الخطوة التالية: ركّب «' + nm(nx) + '».' : 'الروبوت مكتمل! جرّب التشغيل.';
+  }
+  var hasAi = !!(window.Android && typeof window.Android.askAi === 'function');
+  $('ans').textContent = hasAi ? '🤖 اسألني عن أي قطعة أو جهد أو خطوة تركيب.' : '🤖 اسأل عن أي قطعة. خارج التطبيق أجيب من معلومات مدمجة، وداخل التطبيق عبر الذكاء الاصطناعي.';
+  function ask() {
+    var q = $('q').value.trim(); if (!q) return;
+    if (!hasAi) { say(localAnswer(q)); return; }
+    say('جاري التفكير...');
+    var names = stack.map(function (id) { return nm(S[id]) + '=' + instV[id].n; }).join('، ') || 'لا شيء بعد', cc = chk();
+    try { window.Android.askAi('ai_help', 'humanoid_tutor', 'أنت مدرّس يعلّم صناعة الروبوتات (الهيكل البشري) بإيجاز وبالعربية. القطع المركّبة: ' + names + '. التحذيرات الحالية: ' + (cc.bad.concat(cc.soft).join(' | ') || 'لا شيء') + '. السؤال: ' + q); } catch (e) { say(localAnswer(q)); }
+  }
+  $('bAsk').addEventListener('click', ask); $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') ask(); });
+  $('bMic').addEventListener('click', function () {
+    if (window.Android && typeof window.Android.startVoice === 'function') { try { window.Android.startVoice('ai_help'); } catch (e) { toast('تعذّر تشغيل الميكروفون'); } } else toast('الميكروفون متاح داخل التطبيق فقط');
+  });
+  window.onVoiceResult = function (id, ok, text) { if (!ok || !text) { say('لم أسمعك جيداً'); return; } $('q').value = String(text); ask(); };
+  window.onAiResult = function (id, ok, text) { if (ok && text) say(String(text)); else say(localAnswer($('q').value)); };
+
+  // ===== الحلقة =====
+  var clock = new T.Clock(), lw = 0, lh = 0, tw = 0;
+  function resize() { var w = $('scene').clientWidth, h = $('scene').clientHeight; if (!w || !h || (w === lw && h === lh)) return; lw = w; lh = h; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  window.addEventListener('resize', resize);
+  function frame() {
+    requestAnimationFrame(frame);
+    var dt = Math.min(clock.getDelta(), 0.05); tw += dt; resize();
+    for (var i = flights.length - 1; i >= 0; i--) {
+      var f = flights[i];
+      if (f.rej !== undefined) { f.rej += dt; f.o.position.x += Math.sin(f.rej * 40) * 0.02; f.o.scale.setScalar(Math.max(0.01, 1 - Math.max(0, f.rej - 0.6) * 2.5)); if (f.rej > 1) { root.remove(f.o); flights.splice(i, 1); } }
+      else {
+        f.t += dt / 0.8; var p = Math.min(f.t, 1), e = p * p * (3 - 2 * p), w = f.s.pos;
+        f.o.position.set(f.from.x + (w.x - f.from.x) * e, f.from.y + (w.y - f.from.y) * e + Math.sin(Math.PI * p) * 1.2, f.from.z + (w.z - f.from.z) * e);
+        f.o.rotation.y = f.r0 * (1 - e); f.o.scale.setScalar(0.6 + 0.4 * e);
+        if (p >= 1) { flights.splice(i, 1); land(f); }
+      }
+    }
+    ghostMat.opacity = 0.22 + 0.14 * Math.sin(tw * 4);
+    if (running) runAnim(dt);
+    var d = (camera.aspect < 1.2 ? 10.5 : 9) * zoom, cx = root.position.x * 0.5, cz = root.position.z * 0.5;
+    tgt.set(cx, 1.8, cz); camera.position.set(cx + Math.sin(az) * Math.cos(el) * d, 1.8 + Math.sin(el) * d, cz + Math.cos(az) * Math.cos(el) * d); camera.lookAt(tgt);
+    renderer.render(scene, camera);
+  }
+  updateUI(); resize(); frame();
+  setTimeout(function () { var ld = $('loading'); ld.style.opacity = 0; setTimeout(function () { ld.style.display = 'none'; }, 450); }, 600);
+  toast('اختر طريقة التركيب للبدء');
+})();
+</script>
+</body>
+</html>
