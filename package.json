@@ -1,0 +1,21 @@
+{
+  "name": "zevorix-backend",
+  "version": "9.0.0",
+  "description": "Zevorix AI & Gradiometer backend — v9 (Agnes → HF Router → Replicate video fallback)",
+  "main": "index.js",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "firebase-admin": "^12.7.0",
+    "googleapis": "^140.0.1",
+    "multer": "^1.4.5-lts.1",
+    "tweetnacl": "^1.0.3"
+  }
+}
