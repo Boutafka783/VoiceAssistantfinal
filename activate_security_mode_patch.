@@ -1,0 +1,61 @@
+import os
+import re
+
+PKG_DIR = "app/src/main/java/com/zevorix/assistant"
+MAIN_SCREEN = PKG_DIR + "/ui/MainScreen.kt"
+MAIN_VM = PKG_DIR + "/viewmodel/MainViewModel.kt"
+
+print(">> Activating existing Security Mode stub...")
+
+# 1) تفعيل محرك الحماية في ViewModel
+if os.path.exists(MAIN_VM):
+    with open(MAIN_VM, "r", encoding="utf-8") as f:
+        vm_code = f.read()
+
+    if "SecurityMonitor.startMonitoring" not in vm_code:
+        security_function = """
+    // 🛡️ تفعيل وضع الحماية الحقيقي
+    fun activateSecurityProtection() {
+        com.zevorix.assistant.security.SecurityMonitor.startMonitoring(getApplication())
+        _uiState.update { it.copy(partialText = "تم تفعيل وضع الحماية 🛡️") }
+    }
+"""
+        last_brace = vm_code.rfind('}')
+        if last_brace != -1:
+            vm_code = vm_code[:last_brace] + security_function + vm_code[last_brace:]
+            with open(MAIN_VM, "w", encoding="utf-8", newline="\n") as f:
+                f.write(vm_code)
+            print(">> Injected activateSecurityProtection() into MainViewModel")
+
+# 2) ربط زر الحماية الموجود في الواجهة بمركز الأمان
+if os.path.exists(MAIN_SCREEN):
+    with open(MAIN_SCREEN, "r", encoding="utf-8") as f:
+        screen_code = f.read()
+
+    if "SecurityCenterActivity" not in screen_code:
+        # نبحث عن متغير الحالة الخاص بالحماية في setup.py
+        match = re.search(r'state\.(isSecurity\w*|security\w*)', screen_code)
+        
+        if match:
+            state_var = match.group(0)
+            effect = f"""
+        // 🛡️ ربط زر الحماية بمركز الأمان
+        androidx.compose.runtime.LaunchedEffect({state_var}) {{
+            if ({state_var}) {{
+                val intent = android.content.Intent(context, com.zevorix.assistant.security.SecurityCenterActivity::class.java)
+                context.startActivity(intent)
+                viewModel.activateSecurityProtection()
+            }}
+        }}
+"""
+            anchor = f"val state by viewModel.uiState.collectAsStateWithLifecycle()\n"
+            if anchor in screen_code:
+                if "val context = " not in screen_code:
+                    screen_code = screen_code.replace(anchor, anchor + "    val context = androidx.compose.ui.platform.LocalContext.current\n")
+                
+                screen_code = screen_code.replace(anchor, anchor + effect, 1)
+                with open(MAIN_SCREEN, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(screen_code)
+                print(f">> Linked UI state '{state_var}' to SecurityCenterActivity")
+
+print(">> Security Mode Activated successfully!")
